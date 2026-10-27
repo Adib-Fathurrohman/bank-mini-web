@@ -1,0 +1,18 @@
+@import 'tailwindcss';
+
+/* Placeholder brand palette (teal). The visual design is not decided yet;
+   components only use the brand-* tokens so it can be changed here. */
+@theme {
+  --color-brand-50: oklch(0.984 0.014 180.72);
+  --color-brand-600: oklch(0.6 0.118 184.704);
+  --color-brand-700: oklch(0.511 0.096 186.391);
+  --color-brand-800: oklch(0.437 0.078 188.216);
+}
+
+html {
+  color-scheme: light;
+}
+
+body {
+  @apply bg-slate-50 text-slate-900 antialiased;
+}
