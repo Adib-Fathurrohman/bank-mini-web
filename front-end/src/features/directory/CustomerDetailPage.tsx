@@ -18,7 +18,8 @@ import { useCurrentUser } from '@/auth/context'
 import { CustomerActions } from '@/features/admin/CustomerActions'
 import { AuditTable } from '@/features/audit/components/AuditTable'
 import { useAuditTransactions } from '@/features/audit/queries'
-import { ACCOUNT_STATUS_LABEL, ACCOUNT_STATUS_TONE, ACTIVATION_LABEL, ACTIVATION_TONE, classLabel } from './labels'
+import { AppStatusNotice } from './AppStatusNotice'
+import { ACCOUNT_STATUS_LABEL, ACCOUNT_STATUS_TONE, APP_STATE_LABEL, APP_STATE_TONE, appState, classLabel } from './labels'
 import { useCustomer } from './queries'
 
 /** Kartu simpanan PDF for a date range (both optional). */
@@ -114,7 +115,7 @@ export function CustomerDetailPage() {
         meta={
           <>
             <Badge tone={ACCOUNT_STATUS_TONE[c.account_status]}>{ACCOUNT_STATUS_LABEL[c.account_status]}</Badge>
-            {!closed && <Badge tone={ACTIVATION_TONE[c.activation_status]}>{ACTIVATION_LABEL[c.activation_status]}</Badge>}
+            {!closed && <Badge tone={APP_STATE_TONE[appState(c)]}>{APP_STATE_LABEL[appState(c)]}</Badge>}
           </>
         }
         description={
@@ -131,9 +132,10 @@ export function CustomerDetailPage() {
       {flash && <Alert tone="success" title={flash} />}
       {user.role === 'admin' && !closed && c.email === null && (
         <Alert tone="info" title="Belum ada email">
-          Siswa tidak dapat mengaktifkan aplikasi sebelum emailnya diisi. Tambahkan lewat Ubah, lalu kirim undangan.
+          Siswa tidak dapat mengaktifkan aplikasi sebelum emailnya diisi. Tambahkan lewat Ubah.
         </Alert>
       )}
+      {!closed && <AppStatusNotice customer={c} />}
 
       {closed && (
         <Alert tone="info" title="Rekening ditutup">
@@ -160,8 +162,9 @@ export function CustomerDetailPage() {
             <DataRow label="Jurusan">{c.major.major_name}</DataRow>
             <DataRow label="Email">{c.email ?? <span className="text-ink-500">Belum ada</span>}</DataRow>
             <DataRow label="Aplikasi">
-              {c.activated_at ? `Aktif sejak ${formatDateTime(c.activated_at)}` : 'Belum diaktivasi'}
+              {c.activated_at ? `Diaktivasi ${formatDateTime(c.activated_at)}` : 'Belum diaktivasi'}
             </DataRow>
+            <DataRow label="PIN">{c.pin_set ? 'Sudah dibuat' : 'Belum dibuat'}</DataRow>
             <DataRow label="Dibuka">{formatDateTime(c.created_at)}</DataRow>
           </DataList>
         </Panel>

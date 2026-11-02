@@ -43,11 +43,13 @@ export interface Customer {
   group: CustomerGroup
   major: Major
   account_status: AccountStatus
-  /** Registered email for the app invitation; null for accounts created before emails were required. */
+  /** Registered email the student signs in to the app with; null for accounts created before emails were required. */
   email: string | null
-  /** `pending` until the customer activates the mobile app with a Firebase account. */
+  /** `pending` until the customer activates the mobile app with a Firebase account and their NIS. */
   activation_status: ActivationStatus
   activated_at: string | null
+  /** The customer creates the PIN in the app after activation; nothing that needs a PIN works before. */
+  pin_set: boolean
   balance: number
   created_at: string
   updated_at: string
@@ -66,6 +68,9 @@ export interface CustomerSummary {
   account_status: AccountStatus
   balance: number
   pin_locked_until: string | null
+  /** Only an activated customer with a PIN can approve a withdrawal. */
+  activation_status: ActivationStatus
+  pin_set: boolean
 }
 
 export interface PersonRef {
@@ -132,13 +137,6 @@ export interface CustomerCard {
   major: { code: string; major_name: string }
   account_status: AccountStatus
   qr_payload: string
-}
-
-/** Result of emailing an activation link (open account, resend). */
-export interface Invitation {
-  sent_to: string
-  expires_at: string
-  mail_sent: boolean
 }
 
 /** One side of a double entry; every transaction has exactly one debit and one credit line. */

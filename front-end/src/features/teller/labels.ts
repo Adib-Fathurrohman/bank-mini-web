@@ -1,4 +1,4 @@
-import type { AccountStatus, DailyReportStatus, TransactionType } from '@/api/types'
+import type { AccountStatus, ActivationStatus, DailyReportStatus, TransactionType } from '@/api/types'
 import type { BadgeTone } from '@/components/Badge'
 import type { ShiftGate } from './shiftGate'
 
@@ -24,6 +24,35 @@ export const ACCOUNT_STATUS_LABEL: Record<AccountStatus, string> = {
   active: 'Aktif',
   suspended: 'Ditangguhkan',
   inactive: 'Ditutup',
+}
+
+/**
+ * Where the student is with the Bank Mini app. Only `ready` can approve a
+ * withdrawal: the PIN is created in the app after activation.
+ */
+export type AppState = 'pending' | 'noPin' | 'ready'
+
+export function appState(customer: { activation_status: ActivationStatus; pin_set: boolean }): AppState {
+  if (customer.activation_status === 'pending') return 'pending'
+  return customer.pin_set ? 'ready' : 'noPin'
+}
+
+export const APP_STATE_LABEL: Record<AppState, string> = {
+  pending: 'Belum aktivasi',
+  noPin: 'Belum buat PIN',
+  ready: 'Aplikasi aktif',
+}
+
+export const APP_STATE_TONE: Record<AppState, BadgeTone> = {
+  pending: 'neutral',
+  noPin: 'warning',
+  ready: 'info',
+}
+
+/** Why a withdrawal cannot be requested yet, in the backend's own wording (FRONTEND_HANDOFF.md §15.5). */
+export const APP_STATE_WITHDRAWAL_BLOCK: Record<Exclude<AppState, 'ready'>, string> = {
+  pending: 'Nasabah belum mengaktifkan aplikasi Bank Mini, sehingga belum dapat melakukan penarikan.',
+  noPin: 'Nasabah belum membuat PIN. PIN dibuat oleh nasabah di aplikasi Bank Mini setelah akun diaktifkan.',
 }
 
 /** The daily report PDF exists only after a matching close (API.md). */

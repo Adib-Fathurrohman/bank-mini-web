@@ -57,6 +57,16 @@ describe('errorFromResponse', () => {
     expect(locked.pinFailure?.pin_locked_until).toBe('2026-10-27T13:25:37.830610Z')
   })
 
+  it('keeps the refusal code of business errors', () => {
+    const error = errorFromResponse(422, {
+      message: 'Nasabah belum membuat PIN. PIN dibuat oleh nasabah di aplikasi Bank Mini setelah akun diaktifkan.',
+      code: 'pin_not_set',
+    })
+    expect(error.kind).toBe('business')
+    expect(error.code).toBe('pin_not_set')
+    expect(errorFromResponse(422, { message: 'Saldo tidak mencukupi.' }).code).toBeNull()
+  })
+
   it('never exposes a server error body', () => {
     const error = errorFromResponse(500, { message: 'SQLSTATE[HY000] ...', trace: [] })
     expect(error.kind).toBe('server')

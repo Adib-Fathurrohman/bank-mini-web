@@ -19,6 +19,7 @@ import { DepositReview, WithdrawalRequestReview, type CounterTransactionType } f
 import { CustomerPanel, CustomerPanelSkeleton } from './components/CustomerPanel'
 import { TransactionReceipt } from './components/TransactionReceipt'
 import { WithdrawalApproval } from './components/WithdrawalApproval'
+import { APP_STATE_WITHDRAWAL_BLOCK, appState } from './labels'
 import { tellerKeys, useCustomerLookup, useRefreshTeller, useSettings, useShift } from './queries'
 import { QrScannerButton } from './QrScanner'
 import { canTransact } from './shiftGate'
@@ -193,6 +194,8 @@ export function CounterPage() {
       if (settings.data.withdrawal_verification === 'terminal') {
         return 'Persetujuan penarikan lewat aplikasi nasabah sedang dinonaktifkan administrator, sehingga penarikan tidak dapat diproses dari layar ini.'
       }
+      const app = appState(c)
+      if (app !== 'ready') return APP_STATE_WITHDRAWAL_BLOCK[app]
       if (isInFuture(c.pin_locked_until)) return 'PIN nasabah sedang diblokir; penarikan belum dapat diminta.'
     }
     return null
@@ -447,7 +450,7 @@ export function CounterPage() {
               amount={amount}
               flow={flow}
               onCancel={closeReview}
-              onLocked={() => void queryClient.invalidateQueries({ queryKey: tellerKeys.lookup(identifier) })}
+              onCustomerChanged={() => void queryClient.invalidateQueries({ queryKey: tellerKeys.lookup(identifier) })}
             />
           ))}
       </Dialog>

@@ -17,7 +17,9 @@ import {
   ACCOUNT_STATUS_LABEL,
   ACCOUNT_STATUS_TONE,
   ACTIVATION_LABEL,
-  ACTIVATION_TONE,
+  APP_STATE_LABEL,
+  APP_STATE_TONE,
+  appState,
   CLASSES,
   classLabel,
   GROUPS,
@@ -195,7 +197,7 @@ export function CustomersPage() {
                       <Badge tone={ACCOUNT_STATUS_TONE[c.account_status]}>{ACCOUNT_STATUS_LABEL[c.account_status]}</Badge>
                     </td>
                     <td className="hidden py-2.5 pr-3 xl:table-cell">
-                      <Badge tone={ACTIVATION_TONE[c.activation_status]}>{ACTIVATION_LABEL[c.activation_status]}</Badge>
+                      <Badge tone={APP_STATE_TONE[appState(c)]}>{APP_STATE_LABEL[appState(c)]}</Badge>
                     </td>
                     <td className="py-2.5 pr-3 text-right">
                       <Amount value={c.balance} size="sm" />

@@ -16,6 +16,8 @@ function customer(overrides: Partial<CustomerSummary> = {}): CustomerSummary {
     account_status: 'active',
     balance: 625000,
     pin_locked_until: null,
+    activation_status: 'activated',
+    pin_set: true,
     ...overrides,
   }
 }

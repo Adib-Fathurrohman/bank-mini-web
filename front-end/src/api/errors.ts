@@ -46,6 +46,8 @@ export class ApiError extends Error {
   readonly fieldErrors: FieldErrors
   readonly cashMismatch: CashMismatch | null
   readonly pinFailure: PinFailure | null
+  /** Machine-readable reason some refusals carry (e.g. `pin_not_set`). */
+  readonly code: string | null
 
   constructor(init: {
     kind: ApiErrorKind
@@ -54,6 +56,7 @@ export class ApiError extends Error {
     fieldErrors?: FieldErrors
     cashMismatch?: CashMismatch | null
     pinFailure?: PinFailure | null
+    code?: string | null
     cause?: unknown
   }) {
     super(init.message, { cause: init.cause })
@@ -63,6 +66,7 @@ export class ApiError extends Error {
     this.fieldErrors = init.fieldErrors ?? {}
     this.cashMismatch = init.cashMismatch ?? null
     this.pinFailure = init.pinFailure ?? null
+    this.code = init.code ?? null
   }
 
   /** First message for a field, translated to Indonesian where it is a Laravel default. */
@@ -109,13 +113,14 @@ export function errorFromResponse(status: number, body: unknown): ApiError {
   }
 
   const message = serverMessage || GENERIC_MESSAGES.unexpected!
+  const code = typeof record.code === 'string' ? record.code : null
 
   if (status === 401) {
     return new ApiError({ kind: 'auth', status, message: 'Sesi Anda telah berakhir. Silakan masuk kembali.' })
   }
-  if (status === 403) return new ApiError({ kind: 'auth', status, message })
+  if (status === 403) return new ApiError({ kind: 'auth', status, message, code })
   if (status === 404) return new ApiError({ kind: 'notFound', status, message: serverMessage || 'Data tidak ditemukan.' })
-  if (status === 409) return new ApiError({ kind: 'conflict', status, message })
+  if (status === 409) return new ApiError({ kind: 'conflict', status, message, code })
 
   if (status === 422) {
     if (isFieldErrors(record.errors)) {
@@ -148,7 +153,7 @@ export function errorFromResponse(status: number, body: unknown): ApiError {
         },
       })
     }
-    return new ApiError({ kind: 'business', status, message })
+    return new ApiError({ kind: 'business', status, message, code })
   }
 
   return new ApiError({ kind: 'unexpected', status, message })

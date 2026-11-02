@@ -1,15 +1,14 @@
 import { useId, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { Link } from 'react-router'
-import { deactivateCustomer, resendInvitation } from '@/api/endpoints/admin'
+import { deactivateCustomer, resetCustomerPin } from '@/api/endpoints/admin'
 import type { ApiError } from '@/api/errors'
-import type { Customer, Invitation } from '@/api/types'
+import type { Customer } from '@/api/types'
 import { Alert } from '@/components/Alert'
 import { Button, buttonClass } from '@/components/Button'
 import { DataList, DataRow } from '@/components/DataList'
 import { Dialog, DialogActions } from '@/components/Dialog'
 import { TextField } from '@/components/TextField'
-import { formatDateTime } from '@/lib/datetime'
 import { formatRupiah } from '@/lib/money'
 import { useRefreshDirectory } from './queries'
 
@@ -79,13 +78,65 @@ export function GraduateDialog({ customer, open, onClose }: { customer: Customer
   )
 }
 
-/** Admin actions on an open account: edit (incl. PIN reset and suspend), card, invitation, graduation. */
+/** Forgotten PIN: remove it so the student creates a new one in the app. No PIN is typed here. */
+function ResetPinDialog({ customer, open, onClose }: { customer: Customer; open: boolean; onClose: () => void }) {
+  const refresh = useRefreshDirectory()
+  const mutation = useMutation<string, ApiError>({
+    mutationFn: async () => (await resetCustomerPin(customer.id)).message,
+    onSuccess: () => void refresh(),
+  })
+
+  function close() {
+    if (mutation.isPending) return
+    mutation.reset()
+    onClose()
+  }
+
+  return (
+    <Dialog
+      open={open}
+      onClose={close}
+      dismissable={!mutation.isPending}
+      size="sm"
+      title={mutation.isSuccess ? 'PIN direset' : 'Reset PIN nasabah?'}
+      description={
+        mutation.isSuccess
+          ? undefined
+          : 'PIN dan blokir PIN dihapus. Siswa membuat PIN baru di aplikasi Bank Mini; sampai saat itu penarikan tidak dapat dilakukan.'
+      }
+    >
+      <DataList>
+        <DataRow label="Nasabah">{customer.full_name}</DataRow>
+        <DataRow label="Rekening" mono>
+          {customer.account_number}
+        </DataRow>
+      </DataList>
+      {mutation.isSuccess && <Alert tone="success">{mutation.data}</Alert>}
+      {mutation.error && <Alert>{mutation.error.message}</Alert>}
+      <DialogActions>
+        {mutation.isSuccess ? (
+          <Button onClick={close} data-autofocus>
+            Selesai
+          </Button>
+        ) : (
+          <>
+            <Button variant="secondary" disabled={mutation.isPending} onClick={close}>
+              Batal
+            </Button>
+            <Button variant="danger" loading={mutation.isPending} onClick={() => mutation.mutate()} data-autofocus>
+              Reset PIN
+            </Button>
+          </>
+        )}
+      </DialogActions>
+    </Dialog>
+  )
+}
+
+/** Admin actions on an open account: edit (incl. suspend), card, PIN reset, graduation. */
 export function CustomerActions({ customer }: { customer: Customer }) {
   const [graduating, setGraduating] = useState(false)
-  const invite = useMutation<Invitation, ApiError>({
-    mutationFn: async () => (await resendInvitation(customer.id)).data,
-  })
-  const canInvite = customer.activation_status === 'pending' && customer.email !== null
+  const [resettingPin, setResettingPin] = useState(false)
 
   return (
     <>
@@ -95,22 +146,15 @@ export function CustomerActions({ customer }: { customer: Customer }) {
       <Link to={`/customers/${customer.id}/card`} className={buttonClass('secondary')}>
         Cetak kartu
       </Link>
-      {canInvite && (
-        <Button variant="secondary" icon="mail" loading={invite.isPending} onClick={() => invite.mutate()}>
-          Kirim ulang undangan
+      {customer.pin_set && (
+        <Button variant="secondary" icon="lock" onClick={() => setResettingPin(true)}>
+          Reset PIN
         </Button>
       )}
       <Button variant="ghost" onClick={() => setGraduating(true)}>
         Luluskan
       </Button>
-      {invite.data && (
-        <Alert tone={invite.data.mail_sent ? 'success' : 'warning'} className="w-full" title={invite.data.mail_sent ? 'Undangan terkirim' : 'Email gagal terkirim'}>
-          {invite.data.mail_sent
-            ? `Link baru dikirim ke ${invite.data.sent_to}, berlaku sampai ${formatDateTime(invite.data.expires_at)}. Link sebelumnya tidak berlaku lagi.`
-            : 'Coba lagi beberapa saat lagi.'}
-        </Alert>
-      )}
-      {invite.error && <Alert className="w-full">{invite.error.message}</Alert>}
+      <ResetPinDialog customer={customer} open={resettingPin} onClose={() => setResettingPin(false)} />
       <GraduateDialog customer={customer} open={graduating} onClose={() => setGraduating(false)} />
     </>
   )

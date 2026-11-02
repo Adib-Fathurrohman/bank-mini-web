@@ -111,6 +111,9 @@ export function DepositReview({
   )
 }
 
+/** Refusals that mean the lookup is out of date: the app was not activated or the PIN was removed meanwhile. */
+const CUSTOMER_STATE_CODES = ['customer_app_not_activated', 'pin_not_set']
+
 /**
  * T4 withdrawal, Mode A: review, then send the request to the customer's app.
  * There is no PIN field: the customer approves on their own phone.
@@ -119,14 +122,14 @@ export function WithdrawalRequestReview({
   customer,
   amount,
   flow,
-  onLocked,
+  onCustomerChanged,
   onCancel,
 }: {
   customer: CustomerSummary
   amount: number
   flow: WithdrawalFlow
-  /** The server says the PIN is locked: refresh the customer panel. */
-  onLocked: () => void
+  /** The server refused because of the customer's PIN or app state: refresh the customer panel. */
+  onCustomerChanged: () => void
   onCancel: () => void
 }) {
   const { create } = flow
@@ -136,7 +139,10 @@ export function WithdrawalRequestReview({
   function handleSubmit(event: FormEvent) {
     event.preventDefault()
     if (pending) return
-    create.mutate({ account_number: customer.account_number, amount }, { onError: (e) => e.kind === 'pin' && onLocked() })
+    create.mutate(
+      { account_number: customer.account_number, amount },
+      { onError: (e) => (e.kind === 'pin' || CUSTOMER_STATE_CODES.includes(e.code ?? '')) && onCustomerChanged() },
+    )
   }
 
   return (

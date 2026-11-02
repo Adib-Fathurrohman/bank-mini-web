@@ -13,7 +13,7 @@ import { useTrialBalance } from '@/features/audit/queries'
 import { useCustomerCount, useStaffCount } from './queries'
 
 const TASKS: { to: string; label: string; description: string; icon: IconName }[] = [
-  { to: '/customers/new', label: 'Buka rekening', description: 'Siswa baru, undangan aplikasi lewat email', icon: 'plus' },
+  { to: '/customers/new', label: 'Buka rekening', description: 'Siswa baru; siswa mengaktifkan aplikasi sendiri', icon: 'plus' },
   { to: '/staff/new', label: 'Tambah staf', description: 'Teller atau supervisor', icon: 'users' },
   { to: '/staff/import', label: 'Impor staf', description: 'Daftar piket dari Excel atau CSV', icon: 'upload' },
   { to: '/admin/graduation', label: 'Kelulusan', description: 'Tutup rekening siswa yang lulus', icon: 'graduation' },

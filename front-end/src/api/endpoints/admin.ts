@@ -5,7 +5,6 @@ import type {
   CustomerCard,
   CustomerClass,
   CustomerGroup,
-  Invitation,
   MessageResponse,
   QrScannerMode,
   Settings,
@@ -64,18 +63,15 @@ export interface CustomerInput {
   class: CustomerClass
   major_id: number
   group: CustomerGroup
-  /** Six digits; the student changes it in the app. */
-  pin: string
 }
 
+/** No PIN: the student creates it in the app after activating (sending one is refused). */
 export function openAccount(body: CustomerInput) {
-  return api.post<Single<Customer> & { invitation: Invitation }>('/admin/customers', body)
+  return api.post<Single<Customer>>('/admin/customers', body)
 }
 
-export type CustomerUpdate = Partial<Omit<CustomerInput, 'pin'>> & {
+export type CustomerUpdate = Partial<CustomerInput> & {
   account_status?: Extract<AccountStatus, 'active' | 'suspended'>
-  /** A new PIN also lifts a PIN lock. */
-  pin?: string
 }
 
 export function updateCustomer(id: number, body: CustomerUpdate) {
@@ -87,9 +83,9 @@ export function deactivateCustomer(id: number) {
   return api.post<Single<Customer>>(`/admin/customers/${id}/deactivate`)
 }
 
-/** Emails a new activation link; earlier links stop working. */
-export function resendInvitation(id: number) {
-  return api.post<MessageResponse & { data: Invitation }>(`/admin/customers/${id}/invitation`)
+/** Forgotten PIN: removes it and any lock; the student creates a new one in the app. */
+export function resetCustomerPin(id: number) {
+  return api.post<MessageResponse & Single<Customer>>(`/admin/customers/${id}/pin-reset`)
 }
 
 export function fetchCustomerCard(id: number) {

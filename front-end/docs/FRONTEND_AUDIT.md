@@ -25,6 +25,15 @@ longer get a token from NIS + PIN (the answer is `activation_required` /
 Low-fidelity wireframes for every role, including the new customer activation and login
 screens, are in `docs/wireframes/`.
 
+**2026-11-02: backend `a9a6dee`–`55d2bcf` (customer creates the PIN; no emails).** Caught up:
+open account sends no PIN and shows the student's next steps instead of an invitation result; edit
+has no PIN field; "Kirim ulang undangan" is replaced by "Reset PIN" (`POST
+/admin/customers/{id}/pin-reset`, confirmation only, no PIN typed); list and detail show the app
+state (belum aktivasi / belum buat PIN / aplikasi aktif). The teller panel shows the same state and
+blocks "Tarik" until the customer is activated and has a PIN; a `customer_app_not_activated` or
+`pin_not_set` refusal refreshes the lookup. The wireframes still show the earlier invitation and
+admin-PIN screens.
+
 Phase 1 findings:
 
 - The local MariaDB `ukk_laravel` schema predates the backend code (`daily_reports.opening_balance`

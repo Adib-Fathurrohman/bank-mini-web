@@ -1,15 +1,9 @@
 import { useState, type FormEvent } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { Link, useNavigate, useParams } from 'react-router'
-import {
-  openAccount,
-  resendInvitation,
-  updateCustomer,
-  type CustomerInput,
-  type CustomerUpdate,
-} from '@/api/endpoints/admin'
+import { openAccount, updateCustomer, type CustomerInput, type CustomerUpdate } from '@/api/endpoints/admin'
 import type { ApiError } from '@/api/errors'
-import type { Customer, CustomerClass, CustomerGroup, Invitation } from '@/api/types'
+import type { Customer, CustomerClass, CustomerGroup } from '@/api/types'
 import { Alert } from '@/components/Alert'
 import { Button, buttonClass } from '@/components/Button'
 import { DataList, DataRow } from '@/components/DataList'
@@ -19,45 +13,15 @@ import { LoadError, Loading } from '@/components/QueryStatus'
 import { RadioCards } from '@/components/RadioCards'
 import { SelectField } from '@/components/SelectField'
 import { TextField } from '@/components/TextField'
-import { formatDateTime } from '@/lib/datetime'
 import { fieldError, type Flash } from '@/lib/flash'
 import { CLASSES, classLabel, GROUPS } from '@/features/directory/labels'
+import { AppStatusNotice } from '@/features/directory/AppStatusNotice'
 import { useCustomer, useMajors } from '@/features/directory/queries'
-import { validateNewPin } from './pin'
 import { useRefreshDirectory } from './queries'
 
 type Status = 'active' | 'suspended'
 
-/** The invitation email's outcome, with a resend when sending failed. */
-function InvitationStatus({ customerId, invitation }: { customerId: number; invitation: Invitation }) {
-  const resend = useMutation<Invitation, ApiError>({
-    mutationFn: async () => (await resendInvitation(customerId)).data,
-  })
-  const current = resend.data ?? invitation
-  if (current.mail_sent) {
-    return (
-      <Alert tone="success" title="Undangan aktivasi terkirim">
-        Link aktivasi aplikasi dikirim ke {current.sent_to}, berlaku sampai {formatDateTime(current.expires_at)}.
-      </Alert>
-    )
-  }
-  return (
-    <Alert
-      tone="warning"
-      title="Email undangan gagal terkirim"
-      action={
-        <Button variant="secondary" size="sm" icon="mail" loading={resend.isPending} onClick={() => resend.mutate()}>
-          Kirim ulang
-        </Button>
-      }
-    >
-      Rekening tetap dibuat. Periksa alamat email atau koneksi server email, lalu kirim ulang.
-      {resend.error && <span className="mt-1 block font-medium">{resend.error.message}</span>}
-    </Alert>
-  )
-}
-
-function Created({ customer, invitation, onAnother }: { customer: Customer; invitation: Invitation; onAnother: () => void }) {
+function Created({ customer, onAnother }: { customer: Customer; onAnother: () => void }) {
   return (
     <div className="flex flex-col gap-6">
       <Panel className="flex flex-col gap-4 p-4 sm:p-5">
@@ -75,7 +39,7 @@ function Created({ customer, invitation, onAnother }: { customer: Customer; invi
           <DataRow label="Saldo">Rp0 · setoran pertama di loket</DataRow>
         </DataList>
       </Panel>
-      <InvitationStatus customerId={customer.id} invitation={invitation} />
+      <AppStatusNotice customer={customer} />
       <div className="flex flex-wrap gap-2">
         <Link to={`/customers/${customer.id}`} className={buttonClass('primary')}>
           Lihat rekening
@@ -91,8 +55,8 @@ function Created({ customer, invitation, onAnother }: { customer: Customer; invi
   )
 }
 
-/** Open an account (`/customers/new`) or edit one (`/customers/:id/edit`): data, status and PIN reset. */
-function CustomerForm({ existing, onCreated }: { existing: Customer | null; onCreated: (c: Customer, i: Invitation) => void }) {
+/** Open an account (`/customers/new`) or edit one (`/customers/:id/edit`): data and status. No PIN: the student creates it. */
+function CustomerForm({ existing, onCreated }: { existing: Customer | null; onCreated: (c: Customer) => void }) {
   const navigate = useNavigate()
   const refresh = useRefreshDirectory()
   const majors = useMajors()
@@ -103,13 +67,11 @@ function CustomerForm({ existing, onCreated }: { existing: Customer | null; onCr
   const [majorId, setMajorId] = useState(existing ? String(existing.major.id) : '')
   const [group, setGroup] = useState<CustomerGroup | ''>(existing?.group ?? '')
   const [status, setStatus] = useState<Status>(existing?.account_status === 'suspended' ? 'suspended' : 'active')
-  const [pin, setPin] = useState('')
-  const [pinConfirmation, setPinConfirmation] = useState('')
   const [localErrors, setLocalErrors] = useState<Record<string, string>>({})
 
   const emailLocked = existing?.activation_status === 'activated'
 
-  const mutation = useMutation<{ customer: Customer; invitation?: Invitation }, ApiError>({
+  const mutation = useMutation<Customer, ApiError>({
     mutationFn: async () => {
       if (!existing) {
         const body: CustomerInput = {
@@ -119,12 +81,10 @@ function CustomerForm({ existing, onCreated }: { existing: Customer | null; onCr
           class: klass as CustomerClass,
           major_id: Number(majorId),
           group: group as CustomerGroup,
-          pin,
         }
-        const result = await openAccount(body)
-        return { customer: result.data, invitation: result.invitation }
+        return (await openAccount(body)).data
       }
-      // Send only what changed: a changed email cancels earlier invitation links.
+      // Send only what changed (partial update).
       const body: CustomerUpdate = {}
       if (nis.trim() !== existing.nis) body.nis = nis.trim()
       if (fullName.trim() !== existing.full_name) body.full_name = fullName.trim()
@@ -133,23 +93,15 @@ function CustomerForm({ existing, onCreated }: { existing: Customer | null; onCr
       if (Number(majorId) !== existing.major.id) body.major_id = Number(majorId)
       if (group !== existing.group) body.group = group as CustomerGroup
       if (status !== existing.account_status) body.account_status = status
-      if (pin) body.pin = pin
-      return { customer: (await updateCustomer(existing.id, body)).data }
+      return (await updateCustomer(existing.id, body)).data
     },
-    onSuccess: ({ customer, invitation }) => {
+    onSuccess: (customer) => {
       void refresh()
       if (existing) {
-        const notes = ['Perubahan disimpan.']
-        if (pin) notes.push('PIN baru berlaku dan blokir PIN dibuka.')
-        if (!emailLocked && email.trim() !== (existing.email ?? '')) notes.push('Email berubah: kirim ulang undangan aktivasi.')
-        navigate(`/customers/${customer.id}`, { state: { flash: notes.join(' ') } satisfies Flash })
-      } else if (invitation) {
-        onCreated(customer, invitation)
+        navigate(`/customers/${customer.id}`, { state: { flash: 'Perubahan disimpan.' } satisfies Flash })
+      } else {
+        onCreated(customer)
       }
-    },
-    onError: () => {
-      setPin('')
-      setPinConfirmation('')
     },
   })
 
@@ -162,11 +114,6 @@ function CustomerForm({ existing, onCreated }: { existing: Customer | null; onCr
     if (!klass) errors.class = 'Pilih kelas.'
     if (!majorId) errors.major_id = 'Pilih jurusan.'
     if (!group) errors.group = 'Pilih rombel.'
-    if (!existing || pin || pinConfirmation) {
-      const pinErrors = validateNewPin(pin, pinConfirmation)
-      if (pinErrors.pin) errors.pin = pinErrors.pin
-      if (pinErrors.confirmation) errors.pin_confirmation = pinErrors.confirmation
-    }
     setLocalErrors(errors)
     if (Object.keys(errors).length === 0) mutation.mutate()
   }
@@ -194,7 +141,7 @@ function CustomerForm({ existing, onCreated }: { existing: Customer | null; onCr
             hint={
               emailLocked
                 ? 'Tidak dapat diubah karena siswa sudah mengaktifkan aplikasi.'
-                : 'Link aktivasi aplikasi E-Teller dikirim ke email ini. Harus sama dengan akun Google atau email yang dipakai siswa.'
+                : 'Siswa masuk ke aplikasi Bank Mini dengan email ini (akun Google atau email dan kata sandi), lalu mengisi NIS.'
             }
           />
           <div className="grid grid-cols-3 gap-3 sm:col-span-2">
@@ -240,43 +187,13 @@ function CustomerForm({ existing, onCreated }: { existing: Customer | null; onCr
           />
         )}
 
-        <fieldset className="flex flex-col gap-3 rounded-lg border border-ink-200 p-4">
-          <legend className="flex items-center gap-1.5 px-1 text-[13px] font-semibold text-ink-900">
-            <Icon name="lock" className="size-3.5 text-ink-500" />
-            {existing ? 'Reset PIN' : 'PIN awal'}
-          </legend>
-          <p className="-mt-1 text-[13px] text-ink-500">
-            {existing
-              ? 'Isi hanya bila siswa lupa PIN atau PIN terblokir. PIN baru juga membuka blokir PIN.'
-              : 'Berikan langsung kepada siswa. Dipakai untuk membuka aplikasi dan menyetujui penarikan; siswa dapat menggantinya di aplikasi.'}
+        {!existing && (
+          <p className="flex gap-2 rounded-lg border border-ink-200 px-3.5 py-3 text-[13px] text-ink-700">
+            <Icon name="lock" className="mt-0.5 size-4 shrink-0 text-ink-500" />
+            Tidak ada PIN dari petugas. Siswa membuat PIN sendiri di aplikasi setelah aktivasi, dan tidak perlu
+            memberitahukannya kepada siapa pun.
           </p>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <TextField
-              label={existing ? 'PIN baru' : 'PIN (6 digit)'}
-              type="password"
-              inputMode="numeric"
-              autoComplete="new-password"
-              maxLength={6}
-              value={pin}
-              onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
-              disabled={pending}
-              error={err('pin')}
-              inputClassName="font-mono tracking-[0.3em]"
-            />
-            <TextField
-              label="Ulangi PIN"
-              type="password"
-              inputMode="numeric"
-              autoComplete="new-password"
-              maxLength={6}
-              value={pinConfirmation}
-              onChange={(e) => setPinConfirmation(e.target.value.replace(/\D/g, ''))}
-              disabled={pending}
-              error={err('pin_confirmation')}
-              inputClassName="font-mono tracking-[0.3em]"
-            />
-          </div>
-        </fieldset>
+        )}
       </Panel>
 
       {error && error.kind !== 'validation' && <Alert title="Data tidak disimpan">{error.message}</Alert>}
@@ -297,7 +214,7 @@ export function CustomerFormPage() {
   const params = useParams()
   const id = params.id ? Number(params.id) : null
   const existing = useCustomer(id ?? 0, id !== null)
-  const [created, setCreated] = useState<{ customer: Customer; invitation: Invitation } | null>(null)
+  const [created, setCreated] = useState<Customer | null>(null)
   const [formKey, setFormKey] = useState(0)
 
   const back = (
@@ -320,15 +237,14 @@ export function CustomerFormPage() {
         />
         {created ? (
           <Created
-            customer={created.customer}
-            invitation={created.invitation}
+            customer={created}
             onAnother={() => {
               setCreated(null)
               setFormKey((k) => k + 1)
             }}
           />
         ) : (
-          <CustomerForm key={formKey} existing={null} onCreated={(customer, invitation) => setCreated({ customer, invitation })} />
+          <CustomerForm key={formKey} existing={null} onCreated={setCreated} />
         )}
       </div>
     )

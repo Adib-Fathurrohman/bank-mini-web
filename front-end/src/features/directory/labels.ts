@@ -1,7 +1,7 @@
 import type { AccountStatus, ActivationStatus, Customer, CustomerClass, CustomerGroup } from '@/api/types'
 import type { BadgeTone } from '@/components/Badge'
 
-export { ACCOUNT_STATUS_LABEL } from '@/features/teller/labels'
+export { ACCOUNT_STATUS_LABEL, APP_STATE_LABEL, APP_STATE_TONE, appState } from '@/features/teller/labels'
 
 export const ACCOUNT_STATUS_TONE: Record<AccountStatus, BadgeTone> = {
   active: 'success',
@@ -9,14 +9,10 @@ export const ACCOUNT_STATUS_TONE: Record<AccountStatus, BadgeTone> = {
   inactive: 'neutral',
 }
 
+/** Filter options: `activated` includes students who have not created their PIN yet. */
 export const ACTIVATION_LABEL: Record<ActivationStatus, string> = {
   pending: 'Belum aktivasi',
-  activated: 'Aplikasi aktif',
-}
-
-export const ACTIVATION_TONE: Record<ActivationStatus, BadgeTone> = {
-  pending: 'neutral',
-  activated: 'info',
+  activated: 'Sudah aktivasi',
 }
 
 export const CLASSES: CustomerClass[] = ['X', 'XI', 'XII']

@@ -6,15 +6,16 @@ import { Eyebrow, Panel } from '@/components/Page'
 import { Skeleton } from '@/components/QueryStatus'
 import { formatDateTime, formatTime, isInFuture } from '@/lib/datetime'
 import { formatRupiah } from '@/lib/money'
-import { ACCOUNT_STATUS_LABEL } from '../labels'
+import { ACCOUNT_STATUS_LABEL, APP_STATE_LABEL, APP_STATE_TONE, APP_STATE_WITHDRAWAL_BLOCK, appState } from '../labels'
 
 /**
  * T3: the customer found by the lookup. Only fields the lookup endpoint
- * returns: identity, account, balance, status and PIN lock.
+ * returns: identity, account, balance, status, app activation and PIN.
  */
 export function CustomerPanel({ customer, minBalance }: { customer: CustomerSummary; minBalance?: number }) {
   const locked = isInFuture(customer.pin_locked_until)
   const active = customer.account_status === 'active'
+  const app = appState(customer)
   const maxWithdrawal = minBalance === undefined ? null : Math.max(0, customer.balance - minBalance)
 
   return (
@@ -26,6 +27,7 @@ export function CustomerPanel({ customer, minBalance }: { customer: CustomerSumm
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1">
           <Badge tone={active ? 'success' : 'danger'}>{ACCOUNT_STATUS_LABEL[customer.account_status]}</Badge>
+          {app !== 'ready' && <Badge tone={APP_STATE_TONE[app]}>{APP_STATE_LABEL[app]}</Badge>}
           {locked && <Badge tone="warning">PIN diblokir</Badge>}
         </div>
       </div>
@@ -33,7 +35,7 @@ export function CustomerPanel({ customer, minBalance }: { customer: CustomerSumm
       <div className="border-t border-ink-200 px-4 py-3 sm:px-5">
         <Eyebrow>Saldo</Eyebrow>
         <Amount value={customer.balance} size="lg" className="mt-0.5 block" />
-        {maxWithdrawal !== null && active && (
+        {maxWithdrawal !== null && active && app === 'ready' && (
           <p className="mt-0.5 text-[13px] text-ink-500">
             Dapat ditarik {formatRupiah(maxWithdrawal)} · saldo minimum {formatRupiah(minBalance!)}
           </p>
@@ -57,13 +59,18 @@ export function CustomerPanel({ customer, minBalance }: { customer: CustomerSumm
         </div>
       </dl>
 
-      {(customer.account_status !== 'active' || locked) && (
+      {(customer.account_status !== 'active' || locked || app !== 'ready') && (
         <div className="flex flex-col gap-2 border-t border-ink-200 px-4 py-3 sm:px-5">
           {customer.account_status === 'suspended' && (
             <Alert title="Rekening ditangguhkan">Setor dan tarik tunai tidak dapat dilakukan.</Alert>
           )}
           {customer.account_status === 'inactive' && (
             <Alert title="Rekening ditutup">Rekening ini tidak dapat bertransaksi.</Alert>
+          )}
+          {active && app !== 'ready' && (
+            <Alert tone="info" title={app === 'pending' ? 'Aplikasi belum diaktivasi' : 'PIN belum dibuat'}>
+              {APP_STATE_WITHDRAWAL_BLOCK[app]} Setor tunai tetap bisa.
+            </Alert>
           )}
           {locked && customer.pin_locked_until && (
             <Alert tone="warning" title={`PIN diblokir sampai ${formatTime(customer.pin_locked_until)} WIB`}>
