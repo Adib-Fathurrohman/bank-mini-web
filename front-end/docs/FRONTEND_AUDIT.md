@@ -9,7 +9,10 @@ daily report list and review (approve / hold / reject), report PDF, vault ledger
 staff (read-only) stay in Phase 3 with the other shared read pages. **2026-11-02: Phase 3 implemented**
 (admin and supervisor): audit log with filters, detail with journal and app approval, PDF; journal and
 trial balance, PDF; reports page (annual, audit trail, journal PDFs); customers list/detail with
-activation status and statement PDF; staff list/detail. D5 taken: admin sees the audit pages. Next: Phase 4.
+activation status and statement PDF; staff list/detail. D5 taken: admin sees the audit pages. **2026-11-02: Phase 4
+implemented**: admin home, settings, staff add/edit/block/delete/import, open account (required email,
+invitation result), edit (suspend, PIN reset), resend invitation, card print with QR, close one account or
+a whole class (graduation, one request per account). Next: Phase 5 (customer mobile app, separate project).
 
 **2026-11-02: backend `b2eb9d8` (customer Firebase login).** Staff login is unchanged. For the
 staff app this adds work to the admin pages (Phase 4): `POST /admin/customers` requires a unique

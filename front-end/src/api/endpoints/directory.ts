@@ -5,7 +5,6 @@ import type {
   Customer,
   CustomerClass,
   CustomerGroup,
-  Major,
   Paginated,
   Single,
   Staff,
@@ -13,7 +12,7 @@ import type {
 } from '../types'
 
 // Customer and staff reads shared by admin and supervisor (API.md "Customer
-// accounts", "Staff management"). The admin's write endpoints come in Phase 4.
+// accounts", "Staff management"). The admin's writes are in admin.ts.
 
 export interface CustomerFilters {
   /** Name, NIS or account number. */
@@ -26,6 +25,7 @@ export interface CustomerFilters {
   /** `with` adds closed accounts, `only` shows only them. */
   trashed?: 'with' | 'only'
   page?: number
+  per_page?: number
 }
 
 export function fetchCustomers(filters: CustomerFilters) {
@@ -39,10 +39,6 @@ export function fetchCustomer(id: number) {
 
 export function fetchStatementPdf(id: number, range: { from?: string; to?: string }) {
   return requestBlob(`/customers/${id}/statement`, { query: range })
-}
-
-export function fetchMajors() {
-  return api.get<{ data: Major[] }>('/majors')
 }
 
 export interface StaffFilters {

@@ -10,16 +10,22 @@ import { Icon } from '@/components/Icon'
 import { PageHeader, Panel } from '@/components/Page'
 import { Pagination } from '@/components/Pagination'
 import { EmptyState, LoadError, SkeletonRows } from '@/components/QueryStatus'
+import { useFlash } from '@/lib/flash'
 import { useUrlFilters } from '@/lib/useUrlFilters'
+import { useCurrentUser } from '@/auth/context'
+import { Alert } from '@/components/Alert'
+import { buttonClass } from '@/components/Button'
 import { parseOption } from '@/features/audit/labels'
 import { useStaffList } from './queries'
 
 const ROLES: StaffRole[] = ['teller', 'supervisor', 'admin']
 const STATUSES = ['inactive', 'all'] as const
 
-/** Staff accounts (sorted by name). Active ones by default, blocked ones behind the status filter. */
+/** Staff accounts (sorted by name). Active ones by default, blocked ones behind the status filter; the admin adds and imports here. */
 export function StaffPage() {
   const { get, update, clear, page, setPage, filtered } = useUrlFilters<'search' | 'role' | 'status'>()
+  const user = useCurrentUser()
+  const flash = useFlash()
   const search = get('search')
   const role = parseOption(ROLES, get('role'))
   const status = parseOption(STATUSES, get('status'))
@@ -33,7 +39,23 @@ export function StaffPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Staf" description="Akun teller, supervisor, dan administrator." />
+      <PageHeader
+        title="Staf"
+        description="Akun teller, supervisor, dan administrator."
+        actions={
+          user.role === 'admin' && (
+            <>
+              <Link to="/staff/import" className={buttonClass('secondary')}>
+                Impor
+              </Link>
+              <Link to="/staff/new" className={buttonClass('primary')}>
+                Tambah staf
+              </Link>
+            </>
+          )
+        }
+      />
+      {flash && <Alert tone="success" title={flash} />}
 
       <Panel className="overflow-hidden">
         <FilterBar>

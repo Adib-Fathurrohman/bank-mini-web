@@ -12,7 +12,10 @@ import { Eyebrow, PageHeader, Panel, Section } from '@/components/Page'
 import { Pagination } from '@/components/Pagination'
 import { EmptyState, LoadError, Loading, SkeletonRows } from '@/components/QueryStatus'
 import { formatDateTime, jakartaToday } from '@/lib/datetime'
+import { useFlash } from '@/lib/flash'
 import { usePdf } from '@/lib/usePdf'
+import { useCurrentUser } from '@/auth/context'
+import { CustomerActions } from '@/features/admin/CustomerActions'
 import { AuditTable } from '@/features/audit/components/AuditTable'
 import { useAuditTransactions } from '@/features/audit/queries'
 import { ACCOUNT_STATUS_LABEL, ACCOUNT_STATUS_TONE, ACTIVATION_LABEL, ACTIVATION_TONE, classLabel } from './labels'
@@ -70,10 +73,12 @@ function StatementForm({ customerId, accountNumber }: { customerId: number; acco
   )
 }
 
-/** One account (closed ones too): data, app activation, balance, statement PDF and its transactions. */
+/** One account (closed ones too): data, app activation, balance, statement PDF and its transactions; admin actions on open accounts. */
 export function CustomerDetailPage() {
   const id = Number(useParams().id)
   const query = useCustomer(id)
+  const user = useCurrentUser()
+  const flash = useFlash()
   const [page, setPage] = useState(1)
   const history = useAuditTransactions({ customer_id: id }, page)
 
@@ -118,6 +123,17 @@ export function CustomerDetailPage() {
           </span>
         }
       />
+      {user.role === 'admin' && !closed && (
+        <div className="-mt-2 flex flex-wrap items-center gap-2">
+          <CustomerActions customer={c} />
+        </div>
+      )}
+      {flash && <Alert tone="success" title={flash} />}
+      {user.role === 'admin' && !closed && c.email === null && (
+        <Alert tone="info" title="Belum ada email">
+          Siswa tidak dapat mengaktifkan aplikasi sebelum emailnya diisi. Tambahkan lewat Ubah, lalu kirim undangan.
+        </Alert>
+      )}
 
       {closed && (
         <Alert tone="info" title="Rekening ditutup">

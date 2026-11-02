@@ -1,7 +1,7 @@
-import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 import { Amount } from '@/components/Amount'
 import { Badge } from '@/components/Badge'
+import { StatTile, StatTiles } from '@/components/StatTile'
 import { DataList, DataRow } from '@/components/DataList'
 import { PageHeader, Panel, Section } from '@/components/Page'
 import { EmptyState, LoadError, Skeleton, SkeletonRows } from '@/components/QueryStatus'
@@ -11,39 +11,6 @@ import { formatRupiah } from '@/lib/money'
 import { ReportTable } from './components/ReportTable'
 import { useTrialBalance } from '@/features/audit/queries'
 import { useCashTransfers, useReportCount, useReports } from './queries'
-
-/** One figure of the day's work, linking to the list behind it. Each loads and fails on its own. */
-function Tile({
-  label,
-  to,
-  value,
-  loading,
-  failed,
-  highlight = false,
-}: {
-  label: string
-  to: string
-  value: ReactNode
-  loading: boolean
-  failed: boolean
-  highlight?: boolean
-}) {
-  return (
-    <Link
-      to={to}
-      className={`flex flex-col gap-1 px-4 py-3 md:py-4 ${highlight ? 'bg-warn-50 hover:bg-warn-100' : 'bg-white hover:bg-ink-50'}`}
-    >
-      <span className="text-[13px] text-ink-500">{label}</span>
-      {loading ? (
-        <Skeleton className="h-7 w-16" />
-      ) : failed ? (
-        <span className="text-sm text-neg-700">Gagal dimuat</span>
-      ) : (
-        <span className="text-2xl font-semibold tracking-tight text-ink-900">{value}</span>
-      )}
-    </Link>
-  )
-}
 
 /** Supervisor home: what waits for review, what runs, and today's cash into the vault. */
 export function SupervisorDashboard() {
@@ -62,11 +29,8 @@ export function SupervisorDashboard() {
     <div className="flex flex-col gap-6">
       <PageHeader title="Dasbor" description={`${formatDate(today)} · ${user.full_name}`} />
 
-      <nav
-        aria-label="Ringkasan hari ini"
-        className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-ink-200 bg-ink-200 md:grid-cols-4"
-      >
-        <Tile
+      <StatTiles label="Ringkasan hari ini">
+        <StatTile
           label="Menunggu verifikasi"
           to="/supervisor/reports?status=submitted"
           value={pendingTotal}
@@ -74,28 +38,28 @@ export function SupervisorDashboard() {
           failed={Boolean(pending.error)}
           highlight={pendingTotal > 0}
         />
-        <Tile
+        <StatTile
           label="Ditahan"
           to="/supervisor/reports?status=on_hold"
           value={heldTotal}
           loading={held.isPending}
           failed={Boolean(held.error)}
         />
-        <Tile
+        <StatTile
           label="Shift berjalan"
           to="/supervisor/reports?status=open"
           value={running.data}
           loading={running.isPending}
           failed={Boolean(running.error)}
         />
-        <Tile
+        <StatTile
           label="Masuk brankas hari ini"
           to="/supervisor/vault"
           value={transfers.data && <Amount value={transfers.data.total_amount} size="lg" />}
           loading={transfers.isPending}
           failed={Boolean(transfers.error)}
         />
-      </nav>
+      </StatTiles>
 
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
         <div className="flex min-w-0 flex-col gap-6">

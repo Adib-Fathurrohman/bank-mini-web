@@ -3,6 +3,13 @@ import { BrowserRouter, Route, Routes } from 'react-router'
 import { queryClient } from '@/api/queryClient'
 import { AuthProvider } from '@/auth/AuthProvider'
 import { HomeRedirect, RequireRole } from '@/auth/guards'
+import { AdminDashboard } from '@/features/admin/AdminDashboard'
+import { CustomerCardPage } from '@/features/admin/CustomerCardPage'
+import { CustomerFormPage } from '@/features/admin/CustomerFormPage'
+import { GraduationPage } from '@/features/admin/GraduationPage'
+import { SettingsPage } from '@/features/admin/SettingsPage'
+import { StaffFormPage } from '@/features/admin/StaffFormPage'
+import { StaffImportPage } from '@/features/admin/StaffImportPage'
 import { AuditLogPage } from '@/features/audit/AuditLogPage'
 import { AuditTransactionPage } from '@/features/audit/AuditTransactionPage'
 import { ExportsPage } from '@/features/audit/ExportsPage'
@@ -12,7 +19,6 @@ import { CustomerDetailPage } from '@/features/directory/CustomerDetailPage'
 import { CustomersPage } from '@/features/directory/CustomersPage'
 import { StaffDetailPage } from '@/features/directory/StaffDetailPage'
 import { StaffPage } from '@/features/directory/StaffPage'
-import { RoleHomePage } from '@/features/home/RoleHomePage'
 import { NotFoundPage } from '@/features/NotFoundPage'
 import { CloseShiftPage } from '@/features/teller/CloseShiftPage'
 import { CounterPage } from '@/features/teller/CounterPage'
@@ -71,7 +77,15 @@ export function App() {
 
             <Route element={<RequireRole roles={['admin']} />}>
               <Route element={<StaffLayout />}>
-                <Route path="/admin" element={<RoleHomePage />} />
+                <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/admin/settings" element={<SettingsPage />} />
+                <Route path="/admin/graduation" element={<GraduationPage />} />
+                <Route path="/customers/new" element={<CustomerFormPage />} />
+                <Route path="/customers/:id/edit" element={<CustomerFormPage />} />
+                <Route path="/customers/:id/card" element={<CustomerCardPage />} />
+                <Route path="/staff/new" element={<StaffFormPage />} />
+                <Route path="/staff/import" element={<StaffImportPage />} />
+                <Route path="/staff/:id/edit" element={<StaffFormPage />} />
               </Route>
             </Route>
 

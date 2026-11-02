@@ -8,7 +8,7 @@ export interface NavItem {
   icon: IconName
 }
 
-// Pages admin and supervisor share (Phase 3); the admin's write actions land on the same pages in Phase 4.
+// Pages admin and supervisor share; on customers and staff the admin also gets the write actions.
 const SHARED_READ: NavItem[] = [
   { to: '/customers', label: 'Nasabah', icon: 'idCard' },
   { to: '/staff', label: 'Staf', icon: 'users' },
@@ -22,7 +22,10 @@ const SHARED_READ: NavItem[] = [
 export const NAVIGATION: Record<StaffRole, NavItem[]> = {
   admin: [
     { to: ROLE_HOME.admin, label: 'Beranda', icon: 'dashboard' },
-    ...SHARED_READ,
+    SHARED_READ[0]!,
+    { to: '/admin/graduation', label: 'Kelulusan', icon: 'graduation' },
+    ...SHARED_READ.slice(1),
+    { to: '/admin/settings', label: 'Pengaturan', icon: 'settings' },
   ],
   supervisor: [
     { to: ROLE_HOME.supervisor, label: 'Dasbor', icon: 'dashboard' },

@@ -122,6 +122,25 @@ export interface DailyReport {
   cash_transfer?: { id: number; amount: number; transferred_at: string } | null
 }
 
+/** `GET /admin/customers/{id}/card`: what the printed card shows; `qr_payload` is encoded as the QR. */
+export interface CustomerCard {
+  account_number: string
+  nis: string
+  full_name: string
+  class: CustomerClass
+  group: CustomerGroup
+  major: { code: string; major_name: string }
+  account_status: AccountStatus
+  qr_payload: string
+}
+
+/** Result of emailing an activation link (open account, resend). */
+export interface Invitation {
+  sent_to: string
+  expires_at: string
+  mail_sent: boolean
+}
+
 /** One side of a double entry; every transaction has exactly one debit and one credit line. */
 export interface Journal {
   id: number

@@ -141,7 +141,7 @@ export function AppShell({ status, compactStatus }: { status?: ReactNode; compac
   useEffect(() => setMenuOpen(false), [pathname])
 
   return (
-    <div className="min-h-screen lg:pl-[232px]">
+    <div className="min-h-screen lg:pl-[232px] print:pl-0">
       <a
         href="#main"
         className="sr-only z-50 rounded-md bg-white px-3 py-2 text-sm font-medium text-brand-800 shadow-pop focus:not-sr-only focus:fixed focus:top-2 focus:left-2"
@@ -149,11 +149,11 @@ export function AppShell({ status, compactStatus }: { status?: ReactNode; compac
         Lewati ke konten
       </a>
 
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-[232px] border-r border-ink-200 bg-white lg:block">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-[232px] border-r border-ink-200 bg-white lg:block print:hidden">
         <SidebarContent status={status} />
       </aside>
 
-      <header className="sticky top-0 z-20 flex h-14 items-center gap-2 border-b border-ink-200 bg-white px-3 sm:px-4 lg:hidden">
+      <header className="sticky top-0 z-20 flex h-14 items-center gap-2 border-b border-ink-200 bg-white px-3 sm:px-4 lg:hidden print:hidden">
         <button
           type="button"
           aria-label="Buka menu"
@@ -171,7 +171,7 @@ export function AppShell({ status, compactStatus }: { status?: ReactNode; compac
         <SidebarContent status={status} onNavigate={() => setMenuOpen(false)} />
       </NavDrawer>
 
-      <main id="main" tabIndex={-1} className="mx-auto w-full max-w-[1240px] px-4 py-5 focus:outline-none sm:px-6 lg:px-8 lg:py-7">
+      <main id="main" tabIndex={-1} className="mx-auto w-full max-w-[1240px] px-4 py-5 focus:outline-none sm:px-6 lg:px-8 lg:py-7 print:max-w-none print:p-0">
         <Outlet />
       </main>
     </div>

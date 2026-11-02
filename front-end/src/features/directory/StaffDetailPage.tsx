@@ -9,13 +9,16 @@ import { Icon } from '@/components/Icon'
 import { PageHeader, Panel } from '@/components/Page'
 import { LoadError, Loading } from '@/components/QueryStatus'
 import { formatDateTime } from '@/lib/datetime'
+import { useFlash } from '@/lib/flash'
+import { StaffActions } from '@/features/admin/StaffActions'
 import { useStaffMember } from './queries'
 
-/** One staff account, read-only; for a teller, links to their transactions and reports. */
+/** One staff account; for a teller, links to their transactions and reports. The admin can edit, block or delete it. */
 export function StaffDetailPage() {
   const id = Number(useParams().id)
   const user = useCurrentUser()
   const query = useStaffMember(id)
+  const flash = useFlash()
 
   const back = (
     <Link to="/staff" className="mb-1 inline-flex w-fit items-center gap-1 text-[13px] font-medium text-ink-500 hover:text-ink-900">
@@ -49,20 +52,31 @@ export function StaffDetailPage() {
         meta={<Badge tone={s.is_active ? 'success' : 'neutral'}>{s.is_active ? 'Aktif' : 'Diblokir'}</Badge>}
         description={ROLE_LABEL[s.role]}
         actions={
-          teller && (
-            <>
+          <>
+            {teller && (
               <Link to={`/audit/transactions?teller_id=${s.id}`} className={buttonClass('secondary')}>
                 Transaksi di log audit
               </Link>
-              {user.role === 'supervisor' && (
-                <Link to={`/supervisor/reports?teller=${s.id}`} className={buttonClass('secondary')}>
-                  Laporan harian
-                </Link>
-              )}
-            </>
-          )
+            )}
+            {teller && user.role === 'supervisor' && (
+              <Link to={`/supervisor/reports?teller=${s.id}`} className={buttonClass('secondary')}>
+                Laporan harian
+              </Link>
+            )}
+          </>
         }
       />
+      {user.role === 'admin' && s.role !== 'admin' && (
+        <div className="-mt-2 flex flex-wrap items-center gap-2">
+          <StaffActions staff={s} />
+        </div>
+      )}
+      {flash && <Alert tone="success" title={flash} />}
+      {user.role === 'admin' && s.role === 'admin' && (
+        <Alert tone="info" title="Akun administrator">
+          Akun administrator tidak dapat diubah, diblokir, atau dihapus dari aplikasi.
+        </Alert>
+      )}
       {!s.is_active && (
         <Alert tone="info" title="Akun diblokir">
           Staf ini tidak dapat masuk. Riwayatnya tetap tersimpan.

@@ -1,5 +1,6 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import * as directory from '@/api/endpoints/directory'
+import { fetchMajors } from '@/api/endpoints/settings'
 import type { CustomerFilters, StaffFilters } from '@/api/endpoints/directory'
 
 export const directoryKeys = {
@@ -19,9 +20,10 @@ export function useCustomers(filters: CustomerFilters) {
   })
 }
 
-export function useCustomer(id: number) {
+export function useCustomer(id: number, enabled = true) {
   return useQuery({
     queryKey: directoryKeys.customer(id),
+    enabled,
     queryFn: async () => (await directory.fetchCustomer(id)).data,
   })
 }
@@ -29,7 +31,7 @@ export function useCustomer(id: number) {
 export function useMajors() {
   return useQuery({
     queryKey: directoryKeys.majors,
-    queryFn: async () => (await directory.fetchMajors()).data,
+    queryFn: async () => (await fetchMajors()).data,
     staleTime: 30 * 60_000,
   })
 }
@@ -42,9 +44,10 @@ export function useStaffList(filters: StaffFilters) {
   })
 }
 
-export function useStaffMember(id: number) {
+export function useStaffMember(id: number, enabled = true) {
   return useQuery({
     queryKey: directoryKeys.staffMember(id),
+    enabled,
     queryFn: async () => (await directory.fetchStaffMember(id)).data,
   })
 }

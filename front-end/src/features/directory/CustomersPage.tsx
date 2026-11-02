@@ -10,6 +10,8 @@ import { PageHeader, Panel } from '@/components/Page'
 import { Pagination } from '@/components/Pagination'
 import { EmptyState, LoadError, SkeletonRows } from '@/components/QueryStatus'
 import { useUrlFilters } from '@/lib/useUrlFilters'
+import { useCurrentUser } from '@/auth/context'
+import { buttonClass } from '@/components/Button'
 import { parseOption } from '@/features/audit/labels'
 import {
   ACCOUNT_STATUS_LABEL,
@@ -30,6 +32,7 @@ type Key = 'search' | 'major' | 'class' | 'group' | 'status' | 'activation'
 /** Savings accounts, searchable by name, NIS or account number. Closed accounts are behind the status filter. */
 export function CustomersPage() {
   const { get, update, clear, page, setPage, filtered } = useUrlFilters<Key>()
+  const user = useCurrentUser()
   const majors = useMajors()
   const search = get('search')
   const majorId = get('major')
@@ -57,7 +60,22 @@ export function CustomersPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Nasabah" description="Rekening tabungan siswa, urut nama." />
+      <PageHeader
+        title="Nasabah"
+        description="Rekening tabungan siswa, urut nama."
+        actions={
+          user.role === 'admin' && (
+            <>
+              <Link to="/admin/graduation" className={buttonClass('secondary')}>
+                Kelulusan
+              </Link>
+              <Link to="/customers/new" className={buttonClass('primary')}>
+                Buka rekening
+              </Link>
+            </>
+          )
+        }
+      />
 
       <Panel className="overflow-hidden">
         <FilterBar>
