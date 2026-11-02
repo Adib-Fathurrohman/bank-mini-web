@@ -71,6 +71,12 @@ export class ApiError extends Error {
     return first === undefined ? undefined : translateFieldMessage(first)
   }
 
+  /** First message of any field under `prefix` (e.g. `denominations` matches `denominations.50000`). */
+  fieldUnder(prefix: string): string | undefined {
+    const key = Object.keys(this.fieldErrors).find((k) => k === prefix || k.startsWith(`${prefix}.`))
+    return key === undefined ? undefined : this.field(key)
+  }
+
   /** True for the 403/401 responses that must end the session (rubric 3.2). */
   get endsSession(): boolean {
     return this.kind === 'auth' && this.message !== ADMIN_ACCOUNT_LOCKED_MESSAGE

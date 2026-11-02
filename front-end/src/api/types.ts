@@ -9,6 +9,9 @@ export type CustomerGroup = '1' | '2' | '3' | '4'
 export type TransactionType = 'deposit' | 'withdrawal' | 'deposit_correction' | 'withdrawal_correction'
 export type DailyReportStatus = 'open' | 'submitted' | 'on_hold' | 'approved' | 'rejected'
 export type QrScannerMode = 'webcam' | 'usb' | 'disabled'
+/** How a customer authorizes a withdrawal: in the mobile app (Mode A), at the terminal (Mode B), or either. */
+export type WithdrawalVerification = 'mobile' | 'terminal' | 'both'
+export type WithdrawalAuthorizationStatus = 'pending' | 'approved' | 'consumed' | 'rejected' | 'cancelled' | 'expired'
 
 export interface Staff {
   id: number
@@ -79,6 +82,8 @@ export interface Transaction {
   corrected_by?: { id: number; type: TransactionType; created_at: string } | null
   authorized_by?: PersonRef | null
   teller?: PersonRef
+  /** Withdrawals approved by the customer in the mobile app (returned by `complete` and audit detail). */
+  withdrawal_authorization?: { id: string; method: 'mobile'; approved_at: string } | null
 }
 
 export interface CashCount {
@@ -117,6 +122,36 @@ export type ShiftState =
 export interface Settings {
   min_balance: number
   qr_scanner_mode: QrScannerMode
+  withdrawal_verification: WithdrawalVerification
+}
+
+/**
+ * `GET|POST /teller/withdrawal-authorizations[/{id}]` (Mode A): the teller asks,
+ * the customer approves with their PIN in the mobile app, the teller completes.
+ * The teller never sees or sends the PIN.
+ */
+export interface WithdrawalAuthorization {
+  /** ULID */
+  id: string
+  status: WithdrawalAuthorizationStatus
+  status_label: string
+  amount: number
+  amount_in_words: string
+  customer?: { id: number; account_number: string; full_name: string; class: CustomerClass }
+  daily_report_id: number
+  created_at: string
+  /** Deadline for the customer to decide (created + 120 s). */
+  expires_at: string
+  approved_at: string | null
+  /** Deadline for the teller to complete (approved + 120 s). */
+  approval_expires_at: string | null
+  rejected_at: string | null
+  cancelled_at: string | null
+  cancel_reason: 'teller' | 'shift_closed' | null
+  consumed_at: string | null
+  transaction_id: number | null
+  /** For an accurate countdown regardless of the client's clock. */
+  server_time: string
 }
 
 export interface Paginated<T> {

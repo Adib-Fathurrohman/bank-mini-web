@@ -6,6 +6,13 @@ import { HomeRedirect, RequireRole } from '@/auth/guards'
 import { LoginPage } from '@/features/auth/LoginPage'
 import { RoleHomePage } from '@/features/home/RoleHomePage'
 import { NotFoundPage } from '@/features/NotFoundPage'
+import { CloseShiftPage } from '@/features/teller/CloseShiftPage'
+import { CounterPage } from '@/features/teller/CounterPage'
+import { ShiftDetailPage } from '@/features/teller/ShiftDetailPage'
+import { ShiftHistoryPage } from '@/features/teller/ShiftHistoryPage'
+import { TellerHomePage } from '@/features/teller/TellerHomePage'
+import { TellerLayout } from '@/features/teller/TellerLayout'
+import { TransactionsPage } from '@/features/teller/TransactionsPage'
 import { StaffLayout } from '@/layouts/StaffLayout'
 
 export function App() {
@@ -18,8 +25,13 @@ export function App() {
             <Route path="/login" element={<LoginPage />} />
 
             <Route element={<RequireRole roles={['teller']} />}>
-              <Route element={<StaffLayout />}>
-                <Route path="/teller" element={<RoleHomePage />} />
+              <Route element={<TellerLayout />}>
+                <Route path="/teller" element={<TellerHomePage />} />
+                <Route path="/teller/counter" element={<CounterPage />} />
+                <Route path="/teller/transactions" element={<TransactionsPage />} />
+                <Route path="/teller/close" element={<CloseShiftPage />} />
+                <Route path="/teller/history" element={<ShiftHistoryPage />} />
+                <Route path="/teller/history/:id" element={<ShiftDetailPage />} />
               </Route>
             </Route>
 

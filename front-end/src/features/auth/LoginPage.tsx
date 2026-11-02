@@ -4,6 +4,7 @@ import { isApiError, networkError, type ApiError } from '@/api/errors'
 import { useAuth } from '@/auth/context'
 import { ROLE_HOME } from '@/auth/session'
 import { Alert } from '@/components/Alert'
+import { BrandLockup } from '@/components/BrandMark'
 import { Button } from '@/components/Button'
 import { TextField } from '@/components/TextField'
 
@@ -45,18 +46,20 @@ export function LoginPage() {
   const bannerError = error && !usernameError && !passwordError ? error.message : null
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-100 px-4 py-10">
+    <main className="flex min-h-screen flex-col items-center justify-center bg-canvas px-4 py-10">
       <div className="w-full max-w-sm">
-        <div className="mb-6 text-center">
-          <p className="text-sm font-semibold tracking-wide text-brand-700 uppercase">E-Teller Bank Mini</p>
-          <h1 className="mt-1 text-2xl font-bold text-slate-900">Masuk Staf</h1>
-          <p className="mt-1 text-sm text-slate-600">Administrator, supervisor, dan teller.</p>
+        <div className="mb-6 flex flex-col items-center gap-4 text-center">
+          <BrandLockup subtitle="E-Teller · Staf" />
+          <div>
+            <h1 className="text-xl font-semibold text-ink-900">Masuk</h1>
+            <p className="mt-1 text-sm text-ink-600">Untuk administrator, supervisor, dan teller.</p>
+          </div>
         </div>
 
         <form
           onSubmit={handleSubmit}
           noValidate
-          className="flex flex-col gap-4 rounded-lg border border-slate-200 bg-white p-6 shadow-sm"
+          className="flex flex-col gap-4 rounded-xl border border-ink-200 bg-white p-6"
         >
           {notice && <Alert tone="warning">{notice}</Alert>}
           {bannerError && <Alert>{bannerError}</Alert>}
@@ -82,15 +85,15 @@ export function LoginPage() {
             error={passwordError}
           />
 
-          <Button type="submit" loading={pending} className="mt-2 w-full py-2.5">
+          <Button type="submit" size="lg" loading={pending} className="mt-1 w-full">
             {pending ? 'Memproses…' : 'Masuk'}
           </Button>
         </form>
 
-        <p className="mt-4 text-center text-sm text-slate-500">
+        <p className="mt-5 text-center text-[13px] leading-relaxed text-ink-500">
           Lupa password? Hubungi administrator.
           <br />
-          Nasabah masuk melalui aplikasi mobile.
+          Nasabah masuk melalui aplikasi Bank Mini di ponsel.
         </p>
       </div>
     </main>

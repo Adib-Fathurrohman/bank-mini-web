@@ -47,3 +47,11 @@ export function jakartaToday(now: Date = new Date()): string {
 export function isInFuture(iso: string | null | undefined, now: Date = new Date()): boolean {
   return iso != null && new Date(iso).getTime() > now.getTime()
 }
+
+const shortDateFormat = new Intl.DateTimeFormat('id-ID', { timeZone: 'UTC', day: 'numeric', month: 'short', year: 'numeric' })
+
+/** `2026-10-27` → `27 Okt 2026` */
+export function formatShortDate(ymd: string): string {
+  const [year, month, day] = ymd.split('-').map(Number)
+  return shortDateFormat.format(new Date(Date.UTC(year!, month! - 1, day!)))
+}

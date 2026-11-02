@@ -1,7 +1,21 @@
 # Frontend Architecture Audit — E-Teller Bank Mini (staff web app)
 
-Status: audit 2026-10-28. **Phase 0 (foundations) implemented 2026-10-28**; decisions
-D1–D3 taken as recommended (TypeScript, Indonesian UI, `sessionStorage`). Next: Phase 1.
+Status: audit 2026-10-28. **Phase 0 (foundations) and Phase 1 (Teller slice, T1–T10)
+implemented 2026-10-28**; decisions D1–D3 taken as recommended (TypeScript, Indonesian UI,
+`sessionStorage`). **2026-11-01: Teller UI redesigned** (docs/design/) and withdrawals moved
+to Mode A (customer approves in the mobile app; the teller UI has no PIN field and no longer
+calls `POST /teller/withdrawals`). Next: Phase 2 (Supervisor).
+
+Phase 1 findings:
+
+- The local MariaDB `ukk_laravel` schema predates the backend code (`daily_reports.opening_balance`
+  missing → `500` on shift open). Rebuild it with `php artisan migrate:fresh --seed` (destroys its
+  data) before running the app against it. Phase 1 was verified against a separate, freshly seeded
+  SQLite database instead.
+- A2 confirmed: one `Idempotency-Key` reused across wrong-PIN retries records the withdrawal once
+  the PIN is right; a lost response retried with the same key returns `200` and records nothing new.
+- Webcam scanning could not be exercised end to end (no camera in the test browser); the denied /
+  unavailable paths were.
 
 Scope: the React staff web app (Admin, Supervisor, Teller) in
 `~/school/ukk/bank_mini/front-end/`. The customer app (React Native + Expo, Mobile
