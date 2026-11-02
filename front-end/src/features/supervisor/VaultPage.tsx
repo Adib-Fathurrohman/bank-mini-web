@@ -1,20 +1,21 @@
-import { Link, useSearchParams } from 'react-router'
+import { Link } from 'react-router'
 import { Amount } from '@/components/Amount'
 import { Button } from '@/components/Button'
+import { FilterBar, FilterField, filterControl } from '@/components/Filters'
 import { PageHeader, Panel } from '@/components/Page'
 import { Pagination } from '@/components/Pagination'
 import { EmptyState, LoadError, Skeleton, SkeletonRows } from '@/components/QueryStatus'
 import { formatDateTime, formatShortDate, jakartaToday } from '@/lib/datetime'
-import { FilterBar, FilterField, filterControl, TellerSelect } from './components/Filters'
+import { useUrlFilters } from '@/lib/useUrlFilters'
+import { TellerSelect } from '@/features/directory/TellerSelect'
 import { useCashTransfers } from './queries'
 
 /** The vault ledger: cash booked from teller drawers by report approvals (read-only). */
 export function VaultPage() {
-  const [searchParams, setSearchParams] = useSearchParams()
-  const from = searchParams.get('from') ?? ''
-  const to = searchParams.get('to') ?? ''
-  const tellerId = searchParams.get('teller') ?? ''
-  const page = Number(searchParams.get('page') ?? '1') || 1
+  const { get, update, clear, page, setPage, filtered } = useUrlFilters<'from' | 'to' | 'teller'>()
+  const from = get('from')
+  const to = get('to')
+  const tellerId = get('teller')
   const today = jakartaToday()
 
   const transfers = useCashTransfers({
@@ -24,17 +25,6 @@ export function VaultPage() {
     page,
   })
 
-  function update(next: Partial<Record<'from' | 'to' | 'teller' | 'page', string>>) {
-    const params = new URLSearchParams(searchParams)
-    for (const [key, value] of Object.entries(next)) {
-      if (value) params.set(key, value)
-      else params.delete(key)
-    }
-    if (!('page' in next)) params.delete('page')
-    setSearchParams(params)
-  }
-
-  const filtered = Boolean(from || to || tellerId)
   const rows = transfers.data?.data ?? []
 
   return (
@@ -71,7 +61,7 @@ export function VaultPage() {
             <TellerSelect id="vault-teller" value={tellerId} onChange={(teller) => update({ teller })} />
           </FilterField>
           {filtered && (
-            <Button variant="ghost" onClick={() => setSearchParams({})}>
+            <Button variant="ghost" onClick={clear}>
               Hapus filter
             </Button>
           )}
@@ -163,7 +153,7 @@ export function VaultPage() {
       </Panel>
 
       {transfers.data && transfers.data.meta.total > 0 && (
-        <Pagination meta={transfers.data.meta} onPage={(p) => update({ page: p > 1 ? String(p) : '' })} />
+        <Pagination meta={transfers.data.meta} onPage={setPage} />
       )}
     </div>
   )

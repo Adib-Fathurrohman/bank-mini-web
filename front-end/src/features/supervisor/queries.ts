@@ -9,8 +9,6 @@ export const supervisorKeys = {
   reports: (filters: ReportFilters) => ['supervisor', 'reports', filters] as const,
   report: (id: number) => ['supervisor', 'report', id] as const,
   transfers: (filters: TransferFilters) => ['supervisor', 'transfers', filters] as const,
-  trialBalance: (date: string) => ['supervisor', 'trial-balance', date] as const,
-  tellers: ['supervisor', 'tellers'] as const,
 }
 
 export function useReports(filters: ReportFilters) {
@@ -41,21 +39,6 @@ export function useCashTransfers(filters: TransferFilters) {
     queryKey: supervisorKeys.transfers(filters),
     queryFn: () => supervisor.fetchCashTransfers(filters),
     placeholderData: keepPreviousData,
-  })
-}
-
-export function useTrialBalance(date: string) {
-  return useQuery({
-    queryKey: supervisorKeys.trialBalance(date),
-    queryFn: async () => (await supervisor.fetchTrialBalance({ from: date, to: date })).data,
-  })
-}
-
-export function useTellers() {
-  return useQuery({
-    queryKey: supervisorKeys.tellers,
-    queryFn: async () => (await supervisor.fetchTellers()).data,
-    staleTime: 5 * 60_000,
   })
 }
 

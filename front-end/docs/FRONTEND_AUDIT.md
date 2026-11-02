@@ -6,7 +6,10 @@ implemented 2026-10-28**; decisions D1–D3 taken as recommended (TypeScript, In
 to Mode A (customer approves in the mobile app; the teller UI has no PIN field and no longer
 calls `POST /teller/withdrawals`). **2026-11-02: Phase 2 (Supervisor) implemented**: dashboard,
 daily report list and review (approve / hold / reject), report PDF, vault ledger. Customers and
-staff (read-only) stay in Phase 3 with the other shared read pages. Next: Phase 3.
+staff (read-only) stay in Phase 3 with the other shared read pages. **2026-11-02: Phase 3 implemented**
+(admin and supervisor): audit log with filters, detail with journal and app approval, PDF; journal and
+trial balance, PDF; reports page (annual, audit trail, journal PDFs); customers list/detail with
+activation status and statement PDF; staff list/detail. D5 taken: admin sees the audit pages. Next: Phase 4.
 
 **2026-11-02: backend `b2eb9d8` (customer Firebase login).** Staff login is unchanged. For the
 staff app this adds work to the admin pages (Phase 4): `POST /admin/customers` requires a unique

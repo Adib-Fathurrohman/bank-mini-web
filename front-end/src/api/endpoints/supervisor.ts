@@ -5,13 +5,11 @@ import type {
   DailyReportStatus,
   Paginated,
   Single,
-  Staff,
   Transaction,
-  TrialBalance,
 } from '../types'
 
 // Supervisor endpoints (API.md "Supervisor: daily reports", "Supervisor: vault
-// ledger") plus the shared staff and audit reads the supervisor pages need.
+// ledger").
 
 export interface ReportFilters {
   status?: DailyReportStatus
@@ -56,13 +54,4 @@ export function fetchCashTransfers(filters: TransferFilters) {
   return api.get<Paginated<CashTransfer> & { total_amount: number }>('/supervisor/cash-transfers', {
     query: { ...filters },
   })
-}
-
-/** Tellers for filter menus, including blocked ones (their old reports stay). */
-export function fetchTellers() {
-  return api.get<Paginated<Staff>>('/staff', { query: { role: 'teller', status: 'all', per_page: 100 } })
-}
-
-export function fetchTrialBalance(params: { from?: string; to?: string }) {
-  return api.get<Single<TrialBalance>>('/audit/journals/summary', { query: params })
 }

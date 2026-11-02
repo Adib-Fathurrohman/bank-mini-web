@@ -3,7 +3,15 @@ import { BrowserRouter, Route, Routes } from 'react-router'
 import { queryClient } from '@/api/queryClient'
 import { AuthProvider } from '@/auth/AuthProvider'
 import { HomeRedirect, RequireRole } from '@/auth/guards'
+import { AuditLogPage } from '@/features/audit/AuditLogPage'
+import { AuditTransactionPage } from '@/features/audit/AuditTransactionPage'
+import { ExportsPage } from '@/features/audit/ExportsPage'
+import { JournalPage } from '@/features/audit/JournalPage'
 import { LoginPage } from '@/features/auth/LoginPage'
+import { CustomerDetailPage } from '@/features/directory/CustomerDetailPage'
+import { CustomersPage } from '@/features/directory/CustomersPage'
+import { StaffDetailPage } from '@/features/directory/StaffDetailPage'
+import { StaffPage } from '@/features/directory/StaffPage'
 import { RoleHomePage } from '@/features/home/RoleHomePage'
 import { NotFoundPage } from '@/features/NotFoundPage'
 import { CloseShiftPage } from '@/features/teller/CloseShiftPage'
@@ -45,6 +53,19 @@ export function App() {
                 <Route path="/supervisor/reports" element={<ReportsPage />} />
                 <Route path="/supervisor/reports/:id" element={<ReportReviewPage />} />
                 <Route path="/supervisor/vault" element={<VaultPage />} />
+              </Route>
+            </Route>
+
+            <Route element={<RequireRole roles={['admin', 'supervisor']} />}>
+              <Route element={<StaffLayout />}>
+                <Route path="/customers" element={<CustomersPage />} />
+                <Route path="/customers/:id" element={<CustomerDetailPage />} />
+                <Route path="/staff" element={<StaffPage />} />
+                <Route path="/staff/:id" element={<StaffDetailPage />} />
+                <Route path="/audit/transactions" element={<AuditLogPage />} />
+                <Route path="/audit/transactions/:id" element={<AuditTransactionPage />} />
+                <Route path="/audit/journals" element={<JournalPage />} />
+                <Route path="/reports" element={<ExportsPage />} />
               </Route>
             </Route>
 

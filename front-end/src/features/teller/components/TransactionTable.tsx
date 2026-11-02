@@ -7,7 +7,7 @@ import { formatTime } from '@/lib/datetime'
 import { formatRupiah } from '@/lib/money'
 import { cashDirection } from '../labels'
 
-function TypeCell({ transaction }: { transaction: Transaction }) {
+export function TypeCell({ transaction }: { transaction: Transaction }) {
   const correction = transaction.corrects_transaction_id !== null
   const direction = cashDirection(transaction.type)
   return (
@@ -28,7 +28,7 @@ function TypeCell({ transaction }: { transaction: Transaction }) {
   )
 }
 
-function AmountCell({ transaction, corrected }: { transaction: Transaction; corrected: boolean }) {
+export function AmountCell({ transaction, corrected }: { transaction: Transaction; corrected: boolean }) {
   const direction = cashDirection(transaction.type)
   const signed = direction === 'in' ? transaction.amount : -transaction.amount
   return (
@@ -42,7 +42,7 @@ function AmountCell({ transaction, corrected }: { transaction: Transaction; corr
   )
 }
 
-function Note({ transaction, corrected }: { transaction: Transaction; corrected: boolean }) {
+export function TransactionNote({ transaction, corrected }: { transaction: Transaction; corrected: boolean }) {
   if (transaction.corrects_transaction_id !== null) {
     return (
       <span className="text-[13px] text-ink-600">
@@ -133,7 +133,7 @@ export function TransactionTable({
                       {formatRupiah(t.balance_after)}
                     </td>
                     <td className="max-w-60 py-2.5 pr-3">
-                      <Note transaction={t} corrected={done} />
+                      <TransactionNote transaction={t} corrected={done} />
                     </td>
                   </>
                 )}
@@ -165,7 +165,7 @@ export function TransactionTable({
               </div>
               {detailed && (t.corrects_transaction_id !== null || done) && (
                 <div className="pl-8.5">
-                  <Note transaction={t} corrected={done} />
+                  <TransactionNote transaction={t} corrected={done} />
                 </div>
               )}
               {actions && <div className="flex flex-wrap gap-2 pl-8.5">{actions(t)}</div>}

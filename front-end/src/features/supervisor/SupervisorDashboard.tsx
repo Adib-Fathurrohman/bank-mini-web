@@ -9,7 +9,8 @@ import { useCurrentUser } from '@/auth/context'
 import { formatDate, jakartaToday } from '@/lib/datetime'
 import { formatRupiah } from '@/lib/money'
 import { ReportTable } from './components/ReportTable'
-import { useCashTransfers, useReportCount, useReports, useTrialBalance } from './queries'
+import { useTrialBalance } from '@/features/audit/queries'
+import { useCashTransfers, useReportCount, useReports } from './queries'
 
 /** One figure of the day's work, linking to the list behind it. Each loads and fails on its own. */
 function Tile({
@@ -52,7 +53,7 @@ export function SupervisorDashboard() {
   const held = useReports({ status: 'on_hold', per_page: 5 })
   const running = useReportCount('open')
   const transfers = useCashTransfers({ from: today, to: today })
-  const trial = useTrialBalance(today)
+  const trial = useTrialBalance({ from: today, to: today })
 
   const pendingTotal = pending.data?.meta.total ?? 0
   const heldTotal = held.data?.meta.total ?? 0

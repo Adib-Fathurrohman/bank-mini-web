@@ -1,12 +1,13 @@
-import { useSearchParams } from 'react-router'
 import type { DailyReportStatus } from '@/api/types'
 import { Button } from '@/components/Button'
+import { FilterBar, FilterField, filterControl } from '@/components/Filters'
 import { PageHeader, Panel } from '@/components/Page'
 import { Pagination } from '@/components/Pagination'
 import { EmptyState, LoadError, SkeletonRows } from '@/components/QueryStatus'
 import { jakartaToday } from '@/lib/datetime'
+import { useUrlFilters } from '@/lib/useUrlFilters'
+import { TellerSelect } from '@/features/directory/TellerSelect'
 import { REPORT_STATUS_LABEL } from '@/features/teller/labels'
-import { FilterBar, FilterField, filterControl, TellerSelect } from './components/Filters'
 import { ReportTable } from './components/ReportTable'
 import { useReports } from './queries'
 
@@ -18,11 +19,10 @@ function parseStatus(value: string | null): DailyReportStatus | undefined {
 
 /** All tellers' daily reports, filtered by status, date and teller (kept in the URL). */
 export function ReportsPage() {
-  const [searchParams, setSearchParams] = useSearchParams()
-  const status = parseStatus(searchParams.get('status'))
-  const date = searchParams.get('date') ?? ''
-  const tellerId = searchParams.get('teller') ?? ''
-  const page = Number(searchParams.get('page') ?? '1') || 1
+  const { get, update, clear, page, setPage, filtered } = useUrlFilters<'status' | 'date' | 'teller'>()
+  const status = parseStatus(get('status'))
+  const date = get('date')
+  const tellerId = get('teller')
 
   const reports = useReports({
     status,
@@ -30,19 +30,6 @@ export function ReportsPage() {
     teller_id: tellerId ? Number(tellerId) : undefined,
     page,
   })
-
-  function update(next: Partial<Record<'status' | 'date' | 'teller' | 'page', string>>) {
-    const params = new URLSearchParams(searchParams)
-    for (const [key, value] of Object.entries(next)) {
-      if (value) params.set(key, value)
-      else params.delete(key)
-    }
-    // A new filter starts again from the first page.
-    if (!('page' in next)) params.delete('page')
-    setSearchParams(params)
-  }
-
-  const filtered = Boolean(status || date || tellerId)
 
   return (
     <div className="flex flex-col gap-6">
@@ -82,7 +69,7 @@ export function ReportsPage() {
             <TellerSelect id="report-teller" value={tellerId} onChange={(teller) => update({ teller })} />
           </FilterField>
           {filtered && (
-            <Button variant="ghost" onClick={() => setSearchParams({})}>
+            <Button variant="ghost" onClick={clear}>
               Hapus filter
             </Button>
           )}
@@ -104,7 +91,7 @@ export function ReportsPage() {
       </Panel>
 
       {reports.data && reports.data.meta.total > 0 && (
-        <Pagination meta={reports.data.meta} onPage={(p) => update({ page: p > 1 ? String(p) : '' })} />
+        <Pagination meta={reports.data.meta} onPage={setPage} />
       )}
     </div>
   )

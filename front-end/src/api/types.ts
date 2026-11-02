@@ -8,6 +8,9 @@ export type CustomerClass = 'X' | 'XI' | 'XII'
 export type CustomerGroup = '1' | '2' | '3' | '4'
 export type TransactionType = 'deposit' | 'withdrawal' | 'deposit_correction' | 'withdrawal_correction'
 export type DailyReportStatus = 'open' | 'submitted' | 'on_hold' | 'approved' | 'rejected'
+export type ActivationStatus = 'pending' | 'activated'
+export type AccountCode = '101' | '201'
+export type JournalPosition = 'debit' | 'credit'
 export type QrScannerMode = 'webcam' | 'usb' | 'disabled'
 /** How a customer authorizes a withdrawal: in the mobile app (Mode A), at the terminal (Mode B), or either. */
 export type WithdrawalVerification = 'mobile' | 'terminal' | 'both'
@@ -40,6 +43,11 @@ export interface Customer {
   group: CustomerGroup
   major: Major
   account_status: AccountStatus
+  /** Registered email for the app invitation; null for accounts created before emails were required. */
+  email: string | null
+  /** `pending` until the customer activates the mobile app with a Firebase account. */
+  activation_status: ActivationStatus
+  activated_at: string | null
   balance: number
   created_at: string
   updated_at: string
@@ -113,6 +121,27 @@ export interface DailyReport {
   closing_counts?: CashCount[]
   cash_transfer?: { id: number; amount: number; transferred_at: string } | null
 }
+
+/** One side of a double entry; every transaction has exactly one debit and one credit line. */
+export interface Journal {
+  id: number
+  transaction_id: number
+  account_code: AccountCode
+  account_name: string
+  position: JournalPosition
+  amount: number
+  created_at: string
+  /** `GET /audit/journals` only. */
+  transaction?: {
+    id: number
+    type: TransactionType
+    customer: { account_number: string; full_name: string }
+    teller: { full_name: string }
+  }
+}
+
+/** `GET /audit/transactions/{id}`: a transaction with its journal lines. */
+export type AuditTransaction = Transaction & { journals?: Journal[] }
 
 /** Cash moved from a teller's drawer to the main vault, created by a report approval. */
 export interface CashTransfer {

@@ -8,14 +8,27 @@ export interface NavItem {
   icon: IconName
 }
 
+// Pages admin and supervisor share (Phase 3); the admin's write actions land on the same pages in Phase 4.
+const SHARED_READ: NavItem[] = [
+  { to: '/customers', label: 'Nasabah', icon: 'idCard' },
+  { to: '/staff', label: 'Staf', icon: 'users' },
+  { to: '/audit/transactions', label: 'Log audit', icon: 'history' },
+  { to: '/audit/journals', label: 'Jurnal', icon: 'book' },
+  { to: '/reports', label: 'Laporan', icon: 'printer' },
+]
+
 // Menu per role, following the capability matrix in RBAC.md §5.
 // Items are added here as each phase lands its pages.
 export const NAVIGATION: Record<StaffRole, NavItem[]> = {
-  admin: [{ to: ROLE_HOME.admin, label: 'Beranda', icon: 'list' }],
+  admin: [
+    { to: ROLE_HOME.admin, label: 'Beranda', icon: 'dashboard' },
+    ...SHARED_READ,
+  ],
   supervisor: [
     { to: ROLE_HOME.supervisor, label: 'Dasbor', icon: 'dashboard' },
     { to: '/supervisor/reports', label: 'Laporan harian', icon: 'file' },
     { to: '/supervisor/vault', label: 'Brankas', icon: 'vault' },
+    ...SHARED_READ,
   ],
   teller: [
     { to: ROLE_HOME.teller, label: 'Shift', icon: 'banknote' },

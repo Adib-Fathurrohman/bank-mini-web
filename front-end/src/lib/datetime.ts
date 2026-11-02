@@ -55,3 +55,14 @@ export function formatShortDate(ymd: string): string {
   const [year, month, day] = ymd.split('-').map(Number)
   return shortDateFormat.format(new Date(Date.UTC(year!, month! - 1, day!)))
 }
+
+/** The Asia/Jakarta calendar date of a UTC timestamp, as `YYYY-MM-DD`. */
+export function jakartaDate(iso: string): string {
+  return jakartaToday(new Date(iso))
+}
+
+/** Start year of the school year (July–June) containing `ymd`: 2026-11-02 → 2026, 2027-03-01 → 2026. */
+export function schoolYearStart(ymd: string): number {
+  const [year, month] = ymd.split('-').map(Number)
+  return month! >= 7 ? year! : year! - 1
+}

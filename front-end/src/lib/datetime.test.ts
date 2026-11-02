@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatDate, formatDateTime, formatTime, isInFuture, jakartaToday } from './datetime'
+import { formatDate, formatDateTime, formatTime, isInFuture, jakartaDate, jakartaToday, schoolYearStart } from './datetime'
 
 describe('datetime', () => {
   it('shows UTC timestamps in WIB (UTC+7)', () => {
@@ -23,5 +23,20 @@ describe('datetime', () => {
     expect(isInFuture('2026-10-27T13:25:37.830610Z', now)).toBe(true)
     expect(isInFuture('2026-10-27T12:59:00Z', now)).toBe(false)
     expect(isInFuture(null, now)).toBe(false)
+  })
+})
+
+describe('jakartaDate', () => {
+  it('uses the Jakarta calendar day, not UTC', () => {
+    expect(jakartaDate('2026-10-27T18:30:00Z')).toBe('2026-10-28')
+    expect(jakartaDate('2026-10-27T16:59:00Z')).toBe('2026-10-27')
+  })
+})
+
+describe('schoolYearStart', () => {
+  it('starts the school year in July', () => {
+    expect(schoolYearStart('2026-07-01')).toBe(2026)
+    expect(schoolYearStart('2026-11-02')).toBe(2026)
+    expect(schoolYearStart('2027-06-30')).toBe(2026)
   })
 })
