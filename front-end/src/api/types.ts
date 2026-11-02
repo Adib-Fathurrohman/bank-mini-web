@@ -114,6 +114,25 @@ export interface DailyReport {
   cash_transfer?: { id: number; amount: number; transferred_at: string } | null
 }
 
+/** Cash moved from a teller's drawer to the main vault, created by a report approval. */
+export interface CashTransfer {
+  id: number
+  source: 'teller_drawer'
+  destination: 'main_vault'
+  amount: number
+  transferred_at: string
+  daily_report: { id: number; report_date: string; teller: PersonRef }
+  approved_by: PersonRef
+}
+
+/** `GET /audit/journals/summary`: trial balance; double entry keeps it balanced. */
+export interface TrialBalance {
+  accounts: { account_code: string; account_name: string; total_debit: number; total_credit: number }[]
+  total_debit: number
+  total_credit: number
+  is_balanced: boolean
+}
+
 /** `GET /teller/shift` */
 export type ShiftState =
   | { data: DailyReport; can_transact: boolean; transactions: Transaction[] }

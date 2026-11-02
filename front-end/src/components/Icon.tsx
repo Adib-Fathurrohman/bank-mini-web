@@ -19,6 +19,21 @@ const PATHS = {
       <path d="M7 12h10" />
     </>
   ),
+  dashboard: (
+    <>
+      <rect width="7" height="9" x="3" y="3" rx="1" />
+      <rect width="7" height="5" x="14" y="3" rx="1" />
+      <rect width="7" height="9" x="14" y="12" rx="1" />
+      <rect width="7" height="5" x="3" y="16" rx="1" />
+    </>
+  ),
+  vault: (
+    <>
+      <path d="M3 22h18" />
+      <path d="M6 18v-7M10 18v-7M14 18v-7M18 18v-7" />
+      <path d="M11.12 2.2a2 2 0 0 1 1.76 0l7.87 3.85c.47.23.31.95-.22.95H3.47c-.53 0-.7-.72-.22-.95z" />
+    </>
+  ),
   banknote: (
     <>
       <rect width="20" height="12" x="2" y="6" rx="2" />

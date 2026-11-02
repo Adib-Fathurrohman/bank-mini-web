@@ -13,6 +13,10 @@ import { ShiftHistoryPage } from '@/features/teller/ShiftHistoryPage'
 import { TellerHomePage } from '@/features/teller/TellerHomePage'
 import { TellerLayout } from '@/features/teller/TellerLayout'
 import { TransactionsPage } from '@/features/teller/TransactionsPage'
+import { ReportReviewPage } from '@/features/supervisor/ReportReviewPage'
+import { ReportsPage } from '@/features/supervisor/ReportsPage'
+import { SupervisorDashboard } from '@/features/supervisor/SupervisorDashboard'
+import { VaultPage } from '@/features/supervisor/VaultPage'
 import { StaffLayout } from '@/layouts/StaffLayout'
 
 export function App() {
@@ -37,7 +41,10 @@ export function App() {
 
             <Route element={<RequireRole roles={['supervisor']} />}>
               <Route element={<StaffLayout />}>
-                <Route path="/supervisor" element={<RoleHomePage />} />
+                <Route path="/supervisor" element={<SupervisorDashboard />} />
+                <Route path="/supervisor/reports" element={<ReportsPage />} />
+                <Route path="/supervisor/reports/:id" element={<ReportReviewPage />} />
+                <Route path="/supervisor/vault" element={<VaultPage />} />
               </Route>
             </Route>
 

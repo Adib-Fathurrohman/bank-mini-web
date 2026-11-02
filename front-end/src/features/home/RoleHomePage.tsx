@@ -6,7 +6,6 @@ import { PageHeader, Panel } from '@/components/Page'
 
 // Placeholder home pages until each role's phase lands (docs/FRONTEND_AUDIT.md §9).
 const NEXT_STEP: Partial<Record<StaffRole, string>> = {
-  supervisor: 'Verifikasi laporan harian dan buku kas brankas dibangun pada Fase 2.',
   admin: 'Pengelolaan staf, rekening nasabah, dan pengaturan dibangun pada Fase 4.',
 }
 

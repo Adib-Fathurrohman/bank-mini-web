@@ -12,7 +12,11 @@ export interface NavItem {
 // Items are added here as each phase lands its pages.
 export const NAVIGATION: Record<StaffRole, NavItem[]> = {
   admin: [{ to: ROLE_HOME.admin, label: 'Beranda', icon: 'list' }],
-  supervisor: [{ to: ROLE_HOME.supervisor, label: 'Beranda', icon: 'list' }],
+  supervisor: [
+    { to: ROLE_HOME.supervisor, label: 'Dasbor', icon: 'dashboard' },
+    { to: '/supervisor/reports', label: 'Laporan harian', icon: 'file' },
+    { to: '/supervisor/vault', label: 'Brankas', icon: 'vault' },
+  ],
   teller: [
     { to: ROLE_HOME.teller, label: 'Shift', icon: 'banknote' },
     { to: '/teller/counter', label: 'Layanan nasabah', icon: 'userSearch' },

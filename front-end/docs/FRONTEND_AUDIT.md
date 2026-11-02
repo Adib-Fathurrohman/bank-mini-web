@@ -4,7 +4,9 @@ Status: audit 2026-10-28. **Phase 0 (foundations) and Phase 1 (Teller slice, T1â
 implemented 2026-10-28**; decisions D1â€“D3 taken as recommended (TypeScript, Indonesian UI,
 `sessionStorage`). **2026-11-01: Teller UI redesigned** (docs/design/) and withdrawals moved
 to Mode A (customer approves in the mobile app; the teller UI has no PIN field and no longer
-calls `POST /teller/withdrawals`). Next: Phase 2 (Supervisor).
+calls `POST /teller/withdrawals`). **2026-11-02: Phase 2 (Supervisor) implemented**: dashboard,
+daily report list and review (approve / hold / reject), report PDF, vault ledger. Customers and
+staff (read-only) stay in Phase 3 with the other shared read pages. Next: Phase 3.
 
 **2026-11-02: backend `b2eb9d8` (customer Firebase login).** Staff login is unchanged. For the
 staff app this adds work to the admin pages (Phase 4): `POST /admin/customers` requires a unique
