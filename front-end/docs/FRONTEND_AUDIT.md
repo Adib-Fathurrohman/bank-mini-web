@@ -6,6 +6,17 @@ implemented 2026-10-28**; decisions D1–D3 taken as recommended (TypeScript, In
 to Mode A (customer approves in the mobile app; the teller UI has no PIN field and no longer
 calls `POST /teller/withdrawals`). Next: Phase 2 (Supervisor).
 
+**2026-11-02: backend `b2eb9d8` (customer Firebase login).** Staff login is unchanged. For the
+staff app this adds work to the admin pages (Phase 4): `POST /admin/customers` requires a unique
+`email`; customers carry `email` and `activation_status` (`pending`/`activated`, with
+`activated_at`); the customer list takes an `activation` filter; pending accounts can be re-invited
+(`POST /admin/customers/{id}/invitation`), and the create response reports
+`invitation.mail_sent`; the email is editable only while activation is pending. Customers no
+longer get a token from NIS + PIN (the answer is `activation_required` /
+`firebase_login_required`), so local tests that act as the customer need a token another way.
+Low-fidelity wireframes for every role, including the new customer activation and login
+screens, are in `docs/wireframes/`.
+
 Phase 1 findings:
 
 - The local MariaDB `ukk_laravel` schema predates the backend code (`daily_reports.opening_balance`
