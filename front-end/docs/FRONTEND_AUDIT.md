@@ -34,13 +34,13 @@ blocks "Tarik" until the customer is activated and has a PIN; a `customer_app_no
 `pin_not_set` refusal refreshes the lookup. The wireframes still show the earlier invitation and
 admin-PIN screens.
 
-**2026-11-02: Phase 5 implemented** in `../mobile-app` (Expo SDK 58, web and phones): Firebase
+**2026-11-02: Phase 5 implemented** in `../mobile-app`, since moved to the `bank-mini-mobile` repository (Expo SDK 58, web and phones): Firebase
 sign-in (email/password; Google on the web), activation with the NIS, PIN creation, PIN unlock
 (on start and after a minute in the background), home, history, transaction detail, digital card
 QR, change PIN/password, statement PDF, sign out, and withdrawal approval (polled every 4 s,
 server-clock countdown). Tested end to end on the web against the Firebase Auth emulator and a
 scratch backend, including teller request → approve with PIN → teller completes. Deploy of both
-web apps: `../.github/workflows/deploy.yml` and `../DEPLOY.md`.
+web apps: `../.github/workflows/deploy.yml` and `../DEPLOY.md` (customer app: its own repository).
 
 Phase 1 findings:
 

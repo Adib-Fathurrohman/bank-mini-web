@@ -1,6 +1,7 @@
-# Checks both web apps on every push and pull request; deploys the `production`
-# branch to the VPS. The Laravel API deploys from its own repository
-# (bank-mini-laravel, docs/DEPLOY.md). Setup: DEPLOY.md in this repository.
+# Checks the staff web app on every push and pull request; deploys the
+# `production` branch to the VPS. The Laravel API (bank-mini-laravel) and the
+# customer app (bank-mini-mobile) deploy from their own repositories.
+# Setup: DEPLOY.md in this repository.
 name: CI/CD
 
 on:
@@ -45,36 +46,9 @@ jobs:
           path: front-end/dist
           retention-days: 7
 
-  customer:
-    name: Customer app (mobile-app, web build)
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: mobile-app
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-          cache-dependency-path: mobile-app/package-lock.json
-
-      - run: npm ci
-      - run: npm run typecheck
-      - run: npm run lint
-      # A production web build calls /api on its own origin (src/lib/config.ts).
-      - run: npm run build:web
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: customer-web
-          path: mobile-app/dist
-          retention-days: 7
-
   deploy:
     name: Deploy to production
-    needs: [staff, customer]
+    needs: staff
     if: github.event_name == 'push' && github.ref == 'refs/heads/production'
     runs-on: ubuntu-latest
     environment: production
@@ -83,7 +57,6 @@ jobs:
       cancel-in-progress: false
     env:
       STAFF_WEB_PATH: ${{ vars.STAFF_WEB_PATH || '/var/www/bank-mini-frontend' }}
-      CUSTOMER_WEB_PATH: ${{ vars.CUSTOMER_WEB_PATH || '/var/www/bank-mini-app' }}
       DEPLOY_PORT: ${{ vars.DEPLOY_PORT || '22' }}
       TARGET: ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}
     steps:
@@ -91,11 +64,6 @@ jobs:
         with:
           name: staff-web
           path: staff-web
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: customer-web
-          path: customer-web
 
       - name: Configure SSH
         env:
@@ -115,17 +83,12 @@ jobs:
           chmod 600 ~/.ssh/known_hosts
           echo "SSH_CMD=ssh -i $HOME/.ssh/deploy_key -p $DEPLOY_PORT -o BatchMode=yes" >> "$GITHUB_ENV"
 
-      # Two passes per site so open pages keep working: first the new hashed assets
+      # Two passes so open pages keep working: first the new hashed assets
       # next to the old ones, then index.html and removal of files no longer built.
       - name: Upload staff web app
         run: |
           rsync -rz --exclude=index.html --rsync-path="mkdir -p '$STAFF_WEB_PATH' && rsync" -e "$SSH_CMD" staff-web/ "$TARGET:$STAFF_WEB_PATH/"
           rsync -rz --delete-after -e "$SSH_CMD" staff-web/ "$TARGET:$STAFF_WEB_PATH/"
 
-      - name: Upload customer web app
-        run: |
-          rsync -rz --exclude=index.html --rsync-path="mkdir -p '$CUSTOMER_WEB_PATH' && rsync" -e "$SSH_CMD" customer-web/ "$TARGET:$CUSTOMER_WEB_PATH/"
-          rsync -rz --delete-after -e "$SSH_CMD" customer-web/ "$TARGET:$CUSTOMER_WEB_PATH/"
-
       - name: Make the files readable by nginx
-        run: $SSH_CMD "$TARGET" "chmod -R a+rX '$STAFF_WEB_PATH' '$CUSTOMER_WEB_PATH'"
+        run: $SSH_CMD "$TARGET" "chmod -R a+rX '$STAFF_WEB_PATH'"

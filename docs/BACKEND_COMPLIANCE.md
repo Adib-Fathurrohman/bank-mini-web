@@ -1,5 +1,8 @@
 # Backend compliance (frontends vs bank-mini-laravel `ebdb181`)
 
+> Since this audit, `mobile-app/` moved to its own repository, `bank-mini-mobile` (same
+> paths inside it, without the `mobile-app/` prefix).
+
 Audit of `front-end/` (staff web app) and `mobile-app/` (customer app) against
 `bank-mini-laravel` `main` at `ebdb181`. Sources: `docs/FRONTEND_HANDOFF.md`, `docs/API.md`,
 `docs/API_SUMMARY.json` (74 endpoints), `docs/CUSTOMER_AUTH.md`, `docs/UI_REQUIREMENTS.md`, and

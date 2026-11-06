@@ -1,22 +1,21 @@
-# Deployment (web apps)
+# Deployment (staff web app)
 
-This repository holds the two web front ends. The Laravel API deploys from its own
-repository (`bank-mini-laravel`, `docs/DEPLOY.md`); do that first.
+This repository holds the staff web app. The Laravel API deploys from its own repository
+(`bank-mini-laravel`, `docs/DEPLOY.md`); do that first. The customer app (and its web build
+for https://app.rumput.tech) is the `bank-mini-mobile` repository, with its own `DEPLOY.md`.
 
 | Site | Built from | Server folder | API |
 | --- | --- | --- | --- |
 | https://bank.rumput.tech | `front-end` (staff: admin, supervisor, teller) | `/var/www/bank-mini-frontend` | `/api` on the same origin |
-| https://app.rumput.tech | `mobile-app` web build (students) | `/var/www/bank-mini-app` | `/api` on the same origin |
 
 [.github/workflows/deploy.yml](.github/workflows/deploy.yml) runs on every push and
-pull request to `main` and `production`: tests and production build of the staff app,
-typecheck, lint and web build of the customer app. A push to **`production`** that
-passes is uploaded to the VPS with rsync over SSH. Nothing else on the server is
-touched, and nothing is restarted: nginx serves the new files at once.
+pull request to `main` and `production`: tests and production build of the staff app. A
+push to **`production`** that passes is uploaded to the VPS with rsync over SSH. Nothing
+else on the server is touched, and nothing is restarted: nginx serves the new files at once.
 
 ## 1. DNS
 
-At the DNS host of `rumput.tech` (Hostinger), add for **both** `bank` and `app`:
+At the DNS host of `rumput.tech` (Hostinger), add for `bank` (and `app` for the customer app):
 
 | Type | Name | Value |
 | --- | --- | --- |
@@ -42,7 +41,6 @@ Variables (optional):
 | Variable | Default |
 | --- | --- |
 | `STAFF_WEB_PATH` | `/var/www/bank-mini-frontend` |
-| `CUSTOMER_WEB_PATH` | `/var/www/bank-mini-app` |
 | `DEPLOY_PORT` | `22` |
 
 ## 3. nginx and HTTPS (once)
@@ -52,15 +50,13 @@ Then, on the VPS:
 
 ```bash
 cp deploy/nginx/bank.rumput.tech.conf /etc/nginx/sites-available/bank.rumput.tech
-cp deploy/nginx/app.rumput.tech.conf /etc/nginx/sites-available/app.rumput.tech
 ln -s /etc/nginx/sites-available/bank.rumput.tech /etc/nginx/sites-enabled/
-ln -s /etc/nginx/sites-available/app.rumput.tech /etc/nginx/sites-enabled/
 nginx -t && systemctl reload nginx
-certbot --nginx -d bank.rumput.tech -d app.rumput.tech   # after DNS resolves
+certbot --nginx -d bank.rumput.tech   # after DNS resolves
 ```
 
 HTTPS is required: the teller's camera QR scanner and Firebase sign-in only work on a
-secure origin. Both domains are already in Firebase's authorized domains.
+secure origin.
 
 ## 4. First deploy
 
@@ -68,8 +64,7 @@ secure origin. Both domains are already in Firebase's authorized domains.
 git push origin production
 ```
 
-Watch it under **Actions**. Then open https://bank.rumput.tech (staff) and
-https://app.rumput.tech (students).
+Watch it under **Actions**. Then open https://bank.rumput.tech.
 
 Later deploys: merge `main` into `production` and push.
 
