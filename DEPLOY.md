@@ -1,79 +1,91 @@
-# Deployment (staff web app)
+# Deployment
 
-This repository holds the staff web app. The Laravel API deploys from its own repository
-(`bank-mini-laravel`, `docs/DEPLOY.md`); do that first. The customer app (and its web build
-for https://app.rumput.tech) is the `bank-mini-mobile` repository, with its own `DEPLOY.md`.
+The staff web app is a static build (`dist/`) served by nginx at
+**https://bank.rumput.tech**, with `/api` sent to Laravel on the same origin. Deploy the
+API first (`bank-mini-laravel`, its `docs/DEPLOY.md`). The customer app deploys from
+`bank-mini-mobile`.
 
-| Site | Built from | Server folder | API |
-| --- | --- | --- | --- |
-| https://bank.rumput.tech | `front-end` (staff: admin, supervisor, teller) | `/var/www/bank-mini-frontend` | `/api` on the same origin |
+| What | Where on the VPS |
+| --- | --- |
+| This app (`dist/`) | `/var/www/bank-mini-frontend` |
+| Laravel API | `/var/www/bank-mini-laravel` |
 
-[.github/workflows/deploy.yml](.github/workflows/deploy.yml) runs on every push and
-pull request to `main` and `production`: tests and production build of the staff app. A
-push to **`production`** that passes is uploaded to the VPS with rsync over SSH. Nothing
-else on the server is touched, and nothing is restarted: nginx serves the new files at once.
+There are two ways to deploy; both run [deploy/deploy.sh](deploy/deploy.sh), which builds,
+tests and uploads in two passes so open pages keep working. Nothing on the server is
+restarted.
 
-## 1. DNS
+## 1. Once: DNS, nginx, HTTPS
 
-At the DNS host of `rumput.tech` (Hostinger), add for `bank` (and `app` for the customer app):
+**DNS** (Hostinger, zone `rumput.tech`):
 
 | Type | Name | Value |
 | --- | --- | --- |
-| A | `bank` / `app` | `179.197.249.250` |
-| AAAA | `bank` / `app` | `2a02:4780:5e:7723::1` |
+| A | `bank` | `179.197.249.250` |
+| AAAA | `bank` | `2a02:4780:5e:7723::1` |
 
-(The same addresses as `rumput.tech`.) Check with `dig +short bank.rumput.tech`.
+Check with `dig +short bank.rumput.tech`.
 
-## 2. GitHub settings
-
-Repository → Settings → Environments → **`production`**, with the **same secrets as the
-backend repository**:
-
-| Secret | Value |
-| --- | --- |
-| `DEPLOY_HOST` | `rumput.tech` |
-| `DEPLOY_USER` | SSH user, e.g. `root` |
-| `DEPLOY_SSH_KEY` | Private deploy key (the same key as the backend is fine) |
-| `DEPLOY_KNOWN_HOSTS` | Output of `ssh-keyscan rumput.tech` (optional but recommended) |
-
-Variables (optional):
-
-| Variable | Default |
-| --- | --- |
-| `STAFF_WEB_PATH` | `/var/www/bank-mini-frontend` |
-| `DEPLOY_PORT` | `22` |
-
-## 3. nginx and HTTPS (once)
-
-The Laravel server setup (PHP-FPM, database, `.env`) is in the backend's DEPLOY.md.
-Then, on the VPS:
+**nginx** on the VPS, using [deploy/nginx/bank.rumput.tech.conf](deploy/nginx/bank.rumput.tech.conf)
+(serves `dist/`, sends `/api` and `/up` to PHP-FPM):
 
 ```bash
 cp deploy/nginx/bank.rumput.tech.conf /etc/nginx/sites-available/bank.rumput.tech
 ln -s /etc/nginx/sites-available/bank.rumput.tech /etc/nginx/sites-enabled/
 nginx -t && systemctl reload nginx
-certbot --nginx -d bank.rumput.tech   # after DNS resolves
+certbot --nginx -d bank.rumput.tech     # after DNS resolves
 ```
 
-HTTPS is required: the teller's camera QR scanner and Firebase sign-in only work on a
-secure origin.
+HTTPS is required: the teller's camera QR scanner only works on a secure origin.
 
-## 4. First deploy
+## 2a. Automatic: GitHub Actions
+
+[.github/workflows/ci-cd.yml](.github/workflows/ci-cd.yml) tests and builds every push and
+pull request to `main` and `production`. A push to **`production`** that passes is deployed.
+
+Repository → Settings → Environments → **`production`**, with the same secrets as the other
+two repositories:
+
+| Secret | Value |
+| --- | --- |
+| `DEPLOY_HOST` | `rumput.tech` |
+| `DEPLOY_USER` | SSH user, e.g. `root` |
+| `DEPLOY_SSH_KEY` | Private deploy key (its public key in the server's `~/.ssh/authorized_keys`) |
+| `DEPLOY_KNOWN_HOSTS` | Output of `ssh-keyscan rumput.tech` (recommended) |
+
+Variables (optional): `STAFF_WEB_PATH` (default `/var/www/bank-mini-frontend`),
+`DEPLOY_PORT` (`22`).
+
+Deploy:
 
 ```bash
+git switch production
+git merge main
 git push origin production
 ```
 
-Watch it under **Actions**. Then open https://bank.rumput.tech.
+Follow it under the repository's **Actions** tab.
 
-Later deploys: merge `main` into `production` and push.
+## 2b. Manual: from your computer
+
+Needs Node.js, `rsync` and SSH access to the server:
+
+```bash
+deploy/deploy.sh root@rumput.tech
+```
+
+| Variable | Default | Use |
+| --- | --- | --- |
+| `DEPLOY_PATH` | `/var/www/bank-mini-frontend` | Folder on the server |
+| `DEPLOY_PORT` | `22` | SSH port |
+| `SSH_KEY` | your SSH agent / `~/.ssh` | A specific private key file |
+| `SKIP_BUILD=1` | off | Upload the existing `dist/` without building |
 
 ## Checks
 
 | Symptom | Cause |
 | --- | --- |
-| Deploy fails at "Configure SSH" or `Permission denied (publickey)` | Secrets missing in the `production` environment, or the key not in the server's `authorized_keys` |
-| Page loads, every request fails | The API is not deployed yet, or nginx is missing the `/api` block |
-| 404 on reload of a deep link | nginx is missing `try_files ... /index.html` |
-| Google sign-in popup error `auth/unauthorized-domain` | The domain is not in Firebase's authorized domains |
-| Camera does not start at the counter | The site is not on HTTPS |
+| `Permission denied (publickey)` | The key is not in the server's `authorized_keys`, or the wrong user |
+| SSH times out | A firewall (ufw, Hostinger's panel, fail2ban) blocks port 22 |
+| The page loads but every request fails | The API is not deployed, or nginx is missing the `/api` block |
+| 404 when reloading a deep link | nginx is missing `try_files ... /index.html` |
+| The camera does not start at the counter | The site is not on HTTPS |

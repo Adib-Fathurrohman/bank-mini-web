@@ -1,0 +1,85 @@
+# Tests and builds the staff web app on every push and pull request; deploys it
+# when the `production` branch is pushed (deploy/deploy.sh). Setup: DEPLOY.md.
+# The Laravel API (bank-mini-laravel) and the customer app (bank-mini-mobile)
+# deploy from their own repositories.
+name: CI/CD
+
+on:
+  push:
+    branches: [main, production]
+  pull_request:
+    branches: [main, production]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '24'
+
+jobs:
+  build:
+    name: Test and build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - run: npm ci
+      - run: npm test
+      # Type check and production build; the API is same-origin (/api).
+      - run: npm run build
+        env:
+          VITE_API_BASE_URL: /api
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: staff-web
+          path: dist
+          retention-days: 7
+
+  deploy:
+    name: Deploy to production
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/production'
+    runs-on: ubuntu-latest
+    environment: production
+    concurrency:
+      group: production-web-deploy
+      cancel-in-progress: false
+    env:
+      DEPLOY_PATH: ${{ vars.STAFF_WEB_PATH || '/var/www/bank-mini-frontend' }}
+      DEPLOY_PORT: ${{ vars.DEPLOY_PORT || '22' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: staff-web
+          path: dist
+
+      - name: Configure SSH
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          if [ -n "$KNOWN_HOSTS" ]; then
+            printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          else
+            echo "::warning::DEPLOY_KNOWN_HOSTS is not set; trusting the host key from ssh-keyscan."
+            ssh-keyscan -p "$DEPLOY_PORT" "$HOST" > ~/.ssh/known_hosts
+          fi
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Upload
+        env:
+          SKIP_BUILD: '1'
+        run: SSH_KEY="$HOME/.ssh/deploy_key" deploy/deploy.sh "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}"
