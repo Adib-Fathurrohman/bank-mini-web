@@ -14,6 +14,7 @@ import { useCustomerCount, useStaffCount } from './queries'
 
 const TASKS: { to: string; label: string; description: string; icon: IconName }[] = [
   { to: '/customers/new', label: 'Buka rekening', description: 'Siswa baru; siswa mengaktifkan aplikasi sendiri', icon: 'plus' },
+  { to: '/customers/import', label: 'Impor nasabah', description: 'Penabung lama dengan saldo dan riwayat (Excel/CSV)', icon: 'upload' },
   { to: '/staff/new', label: 'Tambah staf', description: 'Teller atau supervisor', icon: 'users' },
   { to: '/staff/import', label: 'Impor staf', description: 'Daftar piket dari Excel atau CSV', icon: 'upload' },
   { to: '/admin/graduation', label: 'Kelulusan', description: 'Tutup rekening siswa yang lulus', icon: 'graduation' },

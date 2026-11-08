@@ -10,6 +10,7 @@ import { GraduationPage } from '@/features/admin/GraduationPage'
 import { SettingsPage } from '@/features/admin/SettingsPage'
 import { StaffFormPage } from '@/features/admin/StaffFormPage'
 import { StaffImportPage } from '@/features/admin/StaffImportPage'
+import { CustomerImportPage } from '@/features/admin/CustomerImportPage'
 import { AuditLogPage } from '@/features/audit/AuditLogPage'
 import { AuditTransactionPage } from '@/features/audit/AuditTransactionPage'
 import { ExportsPage } from '@/features/audit/ExportsPage'
@@ -81,6 +82,7 @@ export function App() {
                 <Route path="/admin/settings" element={<SettingsPage />} />
                 <Route path="/admin/graduation" element={<GraduationPage />} />
                 <Route path="/customers/new" element={<CustomerFormPage />} />
+                <Route path="/customers/import" element={<CustomerImportPage />} />
                 <Route path="/customers/:id/edit" element={<CustomerFormPage />} />
                 <Route path="/customers/:id/card" element={<CustomerCardPage />} />
                 <Route path="/staff/new" element={<StaffFormPage />} />

@@ -22,6 +22,8 @@ export interface CustomerFilters {
   group?: CustomerGroup
   status?: AccountStatus
   activation?: ActivationStatus
+  /** `missing`: imported accounts without an email, which cannot be activated yet. */
+  email?: 'missing' | 'present'
   /** `with` adds closed accounts, `only` shows only them. */
   trashed?: 'with' | 'only'
   page?: number

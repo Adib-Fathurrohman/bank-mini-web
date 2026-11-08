@@ -22,7 +22,10 @@ export function TypeCell({ transaction }: { transaction: Transaction }) {
       </span>
       <span className="leading-tight">
         <span className="block text-ink-900">{transaction.type_label}</span>
-        <span className="font-mono text-xs text-ink-500">#{transaction.id}</span>
+        <span className="font-mono text-xs text-ink-500">
+          #{transaction.id}
+          {transaction.imported && <span className="ml-1.5 font-sans text-ink-500">· impor</span>}
+        </span>
       </span>
     </span>
   )

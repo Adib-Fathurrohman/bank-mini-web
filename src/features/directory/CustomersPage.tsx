@@ -28,8 +28,9 @@ import { useCustomers, useMajors } from './queries'
 
 const STATUS_OPTIONS = ['active', 'suspended', 'closed'] as const
 const ACTIVATION_OPTIONS = ['pending', 'activated'] as const
+const EMAIL_OPTIONS = ['missing', 'present'] as const
 
-type Key = 'search' | 'major' | 'class' | 'group' | 'status' | 'activation'
+type Key = 'search' | 'major' | 'class' | 'group' | 'status' | 'activation' | 'email'
 
 /** Savings accounts, searchable by name, NIS or account number. Closed accounts are behind the status filter. */
 export function CustomersPage() {
@@ -42,6 +43,7 @@ export function CustomersPage() {
   const group = parseOption(GROUPS, get('group'))
   const status = parseOption(STATUS_OPTIONS, get('status'))
   const activation = parseOption(ACTIVATION_OPTIONS, get('activation'))
+  const email = parseOption(EMAIL_OPTIONS, get('email'))
 
   const filters = useMemo<CustomerFilters>(
     () => ({
@@ -53,9 +55,10 @@ export function CustomersPage() {
       status: status === 'closed' ? undefined : status,
       trashed: status === 'closed' ? 'only' : undefined,
       activation,
+      email,
       page,
     }),
-    [search, majorId, klass, group, status, activation, page],
+    [search, majorId, klass, group, status, activation, email, page],
   )
   const list = useCustomers(filters)
   const rows = list.data?.data ?? []
@@ -70,6 +73,9 @@ export function CustomersPage() {
             <>
               <Link to="/admin/graduation" className={buttonClass('secondary')}>
                 Kelulusan
+              </Link>
+              <Link to="/customers/import" className={buttonClass('secondary')}>
+                Impor
               </Link>
               <Link to="/customers/new" className={buttonClass('primary')}>
                 Buka rekening
@@ -137,6 +143,18 @@ export function CustomersPage() {
               <option value="">Semua</option>
               <option value="pending">{ACTIVATION_LABEL.pending}</option>
               <option value="activated">{ACTIVATION_LABEL.activated}</option>
+            </select>
+          </FilterField>
+          <FilterField id="customer-email" label="Email">
+            <select
+              id="customer-email"
+              value={email ?? ''}
+              onChange={(e) => update({ email: e.target.value })}
+              className={filterControl}
+            >
+              <option value="">Semua</option>
+              <option value="missing">Belum ada</option>
+              <option value="present">Sudah ada</option>
             </select>
           </FilterField>
           {filtered && (

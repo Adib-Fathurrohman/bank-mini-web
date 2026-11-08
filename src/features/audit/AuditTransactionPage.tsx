@@ -158,14 +158,16 @@ export function AuditTransactionPage() {
             <DataRow label="Rekening" mono>
               {t.customer.account_number}
             </DataRow>
-            <DataRow label="Teller">{t.teller?.full_name ?? '—'}</DataRow>
+            <DataRow label={t.imported ? 'Diimpor oleh' : 'Teller'}>{t.teller?.full_name ?? '—'}</DataRow>
             <DataRow label="Saldo sebelum">{formatRupiah(t.balance_before)}</DataRow>
             <DataRow label="Saldo sesudah" strong>
               {formatRupiah(t.balance_after)}
             </DataRow>
             {approvedBy && <DataRow label="Persetujuan">{approvedBy}</DataRow>}
             <DataRow label="Shift">
-              {user.role === 'supervisor' ? (
+              {t.daily_report_id === null ? (
+                <>Impor dari pembukuan lama</>
+              ) : user.role === 'supervisor' ? (
                 <Link to={`/supervisor/reports/${t.daily_report_id}`} className="font-medium text-brand-700 hover:underline">
                   Laporan harian #{t.daily_report_id}
                 </Link>
@@ -179,7 +181,7 @@ export function AuditTransactionPage() {
               </DataRow>
             )}
             {t.authorized_by && <DataRow label="Otorisasi supervisor">{t.authorized_by.full_name}</DataRow>}
-            {t.note && <DataRow label="Alasan">“{t.note}”</DataRow>}
+            {t.note && <DataRow label={t.imported ? 'Keterangan' : 'Alasan'}>“{t.note}”</DataRow>}
             {t.corrected_by && (
               <DataRow label="Dibatalkan oleh">
                 <TxLink id={t.corrected_by.id}>Transaksi #{t.corrected_by.id}</TxLink> · {formatDateTime(t.corrected_by.created_at)}

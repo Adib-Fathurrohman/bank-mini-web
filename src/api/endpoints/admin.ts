@@ -66,6 +66,28 @@ export interface CustomerInput {
 }
 
 /** No PIN: the student creates it in the app after activating (sending one is refused). */
+export interface CustomerImportResult {
+  import_id: number
+  customers_created: number
+  transactions_created: number
+  /** These stay pending until an email is added (edit the customer). */
+  customers_without_email: number
+  customers: Customer[]
+}
+
+/**
+ * Existing savers from the old bookkeeping, with balance and optional history
+ * (a "Transaksi" sheet in `file`, or `transactionsFile`). All or nothing; row
+ * errors come back keyed `rows.{i}.{field}` / `transactions.{i}.{field}`
+ * (index 0 = sheet row 2).
+ */
+export function importCustomers(file: File, transactionsFile: File | null) {
+  const body = new FormData()
+  body.append('file', file)
+  if (transactionsFile) body.append('transactions_file', transactionsFile)
+  return api.post<MessageResponse & Single<CustomerImportResult>>('/admin/customers/import', body, { timeoutMs: 120_000 })
+}
+
 export function openAccount(body: CustomerInput) {
   return api.post<Single<Customer>>('/admin/customers', body)
 }

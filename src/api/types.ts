@@ -87,7 +87,10 @@ export interface Transaction {
   balance_before: number
   balance_after: number
   created_at: string
-  daily_report_id: number
+  /** Null for history brought in by a customer import (no teller shift). */
+  daily_report_id: number | null
+  /** History from the old bookkeeping (customer import): no shift, cannot be corrected. */
+  imported?: boolean
   corrects_transaction_id: number | null
   note: string | null
   customer: { id: number; account_number: string; full_name: string }
