@@ -27,4 +27,3 @@ coverage/
 
 # Claude Code: the shared launch config is committed, personal settings are not
 .claude/*
-!.claude/launch.json
