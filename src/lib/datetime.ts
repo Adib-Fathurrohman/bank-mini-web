@@ -15,7 +15,7 @@ const dateTimeFormat = new Intl.DateTimeFormat('id-ID', {
 const timeFormat = new Intl.DateTimeFormat('id-ID', { timeZone: TIME_ZONE, hour: '2-digit', minute: '2-digit' })
 
 const dateFormat = new Intl.DateTimeFormat('id-ID', {
-  timeZone: 'UTC', // the input is already a calendar date; do not shift it
+  timeZone: 'UTC',
   weekday: 'long',
   day: 'numeric',
   month: 'long',
