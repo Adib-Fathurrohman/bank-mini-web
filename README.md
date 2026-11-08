@@ -5,9 +5,9 @@ Web app for the staff of a school mini bank: **Administrator**, **Supervisor** a
 
 | Part | Repository |
 | --- | --- |
-| Staff web app (this repository) | `ukk_bank_mini` → https://bank.rumput.tech |
-| API (Laravel) | `bank-mini-laravel` |
-| Customer app (Expo, Android and web) | `bank-mini-mobile` → https://app.rumput.tech |
+| Staff web app (this repository) | `bank-mini-web` → https://bank.rumput.tech/api/ |
+| API (Laravel) | `bank-mini-laravel` → https://api-bank.rumput.tech/api |
+| Customer app (Expo, Android) | `bank-mini-mobile` → APK on its GitHub Releases page |
 
 ## What each role does
 
@@ -51,8 +51,9 @@ Copy `.env.example` to `.env` to override:
 
 | Variable | Default | Meaning |
 | --- | --- | --- |
-| `VITE_API_BASE_URL` | `/api` | API base URL as seen by the browser |
+| `VITE_API_BASE_URL` | `/api` | API base URL as seen by the browser, including `/api`. Production: `https://api-bank.rumput.tech/api` |
 | `VITE_BACKEND_URL` | `http://localhost:8000` | Development only: where the `/api` proxy forwards |
+| `VITE_BASE_PATH` | `/api/` | Build only: the path the app is served under (`/` for the site root) |
 
 ## Scripts
 
@@ -61,8 +62,8 @@ Copy `.env.example` to `.env` to override:
 | `npm run dev` | Development server with the API proxy |
 | `npm test` | Unit tests (Vitest) |
 | `npm run typecheck` | TypeScript check |
-| `npm run build` | Type check and production build into `dist/` |
-| `deploy/deploy.sh user@host` | Build and upload to the server (see [DEPLOY.md](DEPLOY.md)) |
+| `npm run build` | Type check and production build into `dist/` (served under `/api/`) |
+| `npm run preview` | Serve `dist/` locally at http://localhost:4173/api/ |
 
 ## Layout
 
@@ -75,8 +76,9 @@ src/
 ├── lib/         money, terbilang, WIB dates, denominations, idempotency keys, PDF helpers
 └── features/    pages per area (auth, teller, supervisor, admin, audit, directory)
 deploy/
-├── deploy.sh                 build and upload
-└── nginx/bank.rumput.tech.conf
+├── server/                   deploy-staff.sh, rollback-staff.sh, nginx vhost (used)
+├── deploy.sh                 legacy, not used
+└── nginx/                    legacy, not used
 ```
 
 ## Session behaviour
@@ -88,5 +90,6 @@ deploy/
 
 ## Deployment
 
-Pushing the `production` branch runs the tests, builds and uploads the app to the VPS
-through GitHub Actions. Server setup, secrets and the manual script: [DEPLOY.md](DEPLOY.md).
+Releases are built locally from a version tag, published as a GitHub Release with `gh`,
+and installed on the VPS with `deploy-staff.sh`. See [DEPLOY.md](DEPLOY.md). The GitHub
+Actions workflow is legacy and is not used.

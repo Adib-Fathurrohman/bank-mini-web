@@ -34,10 +34,13 @@ import { SupervisorDashboard } from '@/features/supervisor/SupervisorDashboard'
 import { VaultPage } from '@/features/supervisor/VaultPage'
 import { StaffLayout } from '@/layouts/StaffLayout'
 
+// The router follows Vite's base (vite.config.ts): '/api' in production, '/' in development.
+const ROUTER_BASENAME = import.meta.env.BASE_URL.replace(/\/+$/, '') || '/'
+
 export function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
+      <BrowserRouter basename={ROUTER_BASENAME}>
         <AuthProvider>
           <Routes>
             <Route path="/" element={<HomeRedirect />} />
