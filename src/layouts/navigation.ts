@@ -11,6 +11,7 @@ export interface NavItem {
 // Pages admin and supervisor share; on customers and staff the admin also gets the write actions.
 const SHARED_READ: NavItem[] = [
   { to: '/customers', label: 'Nasabah', icon: 'idCard' },
+  { to: '/pin-reset-requests', label: 'Reset PIN', icon: 'lock' },
   { to: '/staff', label: 'Staf', icon: 'users' },
   { to: '/audit/transactions', label: 'Log audit', icon: 'history' },
   { to: '/audit/journals', label: 'Jurnal', icon: 'book' },
@@ -22,9 +23,9 @@ const SHARED_READ: NavItem[] = [
 export const NAVIGATION: Record<StaffRole, NavItem[]> = {
   admin: [
     { to: ROLE_HOME.admin, label: 'Beranda', icon: 'dashboard' },
-    SHARED_READ[0]!,
+    ...SHARED_READ.slice(0, 2),
     { to: '/admin/graduation', label: 'Kelulusan', icon: 'graduation' },
-    ...SHARED_READ.slice(1),
+    ...SHARED_READ.slice(2),
     { to: '/admin/settings', label: 'Pengaturan', icon: 'settings' },
   ],
   supervisor: [

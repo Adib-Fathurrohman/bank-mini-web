@@ -222,6 +222,29 @@ export interface WithdrawalAuthorization {
   server_time: string
 }
 
+/** Forgotten PIN, self-service (backend v0.1.1, API.md "Forgotten PIN: self-service requests"). */
+export type PinResetStatus = 'pending' | 'approved' | 'completed' | 'rejected' | 'cancelled' | 'expired'
+
+export interface PinResetRequest {
+  id: string
+  status: PinResetStatus
+  status_label: string
+  requested_at: string
+  /** The student can set the new PIN from here, once approved (request time + 24 h). */
+  available_at: string | null
+  /** Approved and `available_at` has passed. */
+  ready: boolean
+  expires_at: string | null
+  approved_at: string | null
+  rejected_at: string | null
+  cancelled_at: string | null
+  completed_at: string | null
+  decision_note: string | null
+  customer: CustomerSummary
+  /** Name of the administrator who approved or rejected it. */
+  decided_by: string | null
+}
+
 export interface Paginated<T> {
   data: T[]
   links: { first: string | null; last: string | null; prev: string | null; next: string | null }

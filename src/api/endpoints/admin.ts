@@ -6,6 +6,9 @@ import type {
   CustomerClass,
   CustomerGroup,
   MessageResponse,
+  Paginated,
+  PinResetRequest,
+  PinResetStatus,
   QrScannerMode,
   Settings,
   Single,
@@ -116,4 +119,29 @@ export function fetchCustomerCard(id: number) {
 
 export function updateSettings(body: Partial<{ min_balance: number; qr_scanner_mode: QrScannerMode; withdrawal_verification: WithdrawalVerification }>) {
   return api.patch<Single<Settings>>('/admin/settings', body)
+}
+
+// Forgotten PIN, self-service requests (backend v0.1.1). The student asks in the app;
+// the administrator checks the student card in person and approves or rejects here.
+// The list is readable by supervisors too; the decision is the administrator's.
+
+export interface PinResetFilters {
+  status?: PinResetStatus
+  customer_id?: number
+  page?: number
+  per_page?: number
+}
+
+/** Newest first. Overdue requests are expired by the backend on read. */
+export function fetchPinResetRequests(filters: PinResetFilters) {
+  return api.get<Paginated<PinResetRequest>>('/pin-reset-requests', { query: { ...filters } })
+}
+
+/** Pending only (409 pin_reset_not_usable otherwise). The new PIN can be set 24 h after the request. */
+export function approvePinReset(id: string, note: string | null) {
+  return api.post<Single<PinResetRequest>>(`/admin/pin-reset-requests/${encodeURIComponent(id)}/approve`, note ? { note } : {})
+}
+
+export function rejectPinReset(id: string, note: string | null) {
+  return api.post<Single<PinResetRequest>>(`/admin/pin-reset-requests/${encodeURIComponent(id)}/reject`, note ? { note } : {})
 }

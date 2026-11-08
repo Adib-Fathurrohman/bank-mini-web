@@ -16,6 +16,7 @@ import { useFlash } from '@/lib/flash'
 import { usePdf } from '@/lib/usePdf'
 import { useCurrentUser } from '@/auth/context'
 import { CustomerActions } from '@/features/admin/CustomerActions'
+import { useOpenPinReset } from '@/features/admin/queries'
 import { AuditTable } from '@/features/audit/components/AuditTable'
 import { useAuditTransactions } from '@/features/audit/queries'
 import { AppStatusNotice } from './AppStatusNotice'
@@ -136,6 +137,7 @@ export function CustomerDetailPage() {
         </Alert>
       )}
       {!closed && <AppStatusNotice customer={c} />}
+      {!closed && <OpenPinResetNotice customerId={c.id} />}
 
       {closed && (
         <Alert tone="info" title="Rekening ditutup">
@@ -206,5 +208,22 @@ export function CustomerDetailPage() {
       </Section>
       {history.data && <Pagination meta={history.data.meta} onPage={setPage} />}
     </div>
+  )
+}
+
+/** A forgotten-PIN request still open (withdrawals are paused until it is decided or completed). */
+function OpenPinResetNotice({ customerId }: { customerId: number }) {
+  const { data } = useOpenPinReset(customerId)
+  if (!data) return null
+  return (
+    <Alert
+      tone="warning"
+      title={data.status === 'pending' ? 'Permintaan reset PIN menunggu persetujuan' : 'Reset PIN disetujui, PIN baru belum dibuat'}
+    >
+      Diajukan dari aplikasi {formatDateTime(data.requested_at)}. Penarikan ditunda selama permintaan terbuka.{' '}
+      <Link to="/pin-reset-requests" className="font-medium underline">
+        Buka daftar reset PIN
+      </Link>
+    </Alert>
   )
 }

@@ -11,6 +11,7 @@ import { SettingsPage } from '@/features/admin/SettingsPage'
 import { StaffFormPage } from '@/features/admin/StaffFormPage'
 import { StaffImportPage } from '@/features/admin/StaffImportPage'
 import { CustomerImportPage } from '@/features/admin/CustomerImportPage'
+import { PinResetRequestsPage } from '@/features/admin/PinResetRequestsPage'
 import { AuditLogPage } from '@/features/audit/AuditLogPage'
 import { AuditTransactionPage } from '@/features/audit/AuditTransactionPage'
 import { ExportsPage } from '@/features/audit/ExportsPage'
@@ -76,6 +77,7 @@ export function App() {
                 <Route path="/audit/transactions/:id" element={<AuditTransactionPage />} />
                 <Route path="/audit/journals" element={<JournalPage />} />
                 <Route path="/reports" element={<ExportsPage />} />
+                <Route path="/pin-reset-requests" element={<PinResetRequestsPage />} />
               </Route>
             </Route>
 

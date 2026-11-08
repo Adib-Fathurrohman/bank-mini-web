@@ -14,8 +14,8 @@ Web app for the staff of a school mini bank: **Administrator**, **Supervisor** a
 | Role | Pages |
 | --- | --- |
 | Teller | open the shift with the drawer count, serve customers (deposit, withdrawal approved by the customer in their app, QR lookup), corrections, close the shift, shift history and PDFs |
-| Supervisor | dashboard, review daily reports (approve, hold, reject), vault ledger, customers, staff, audit log, journal, reports |
-| Administrator | dashboard, open and edit customer accounts, reset PINs, print cards, graduation, staff (add, edit, block, import from Excel/CSV), settings, audit log, journal, reports |
+| Supervisor | dashboard, review daily reports (approve, hold, reject), vault ledger, customers, staff, forgotten-PIN requests (read only), audit log, journal, reports |
+| Administrator | dashboard, open and edit customer accounts, reset PINs at the counter, approve or reject forgotten-PIN requests from the app, print cards, graduation, staff (add, edit, block, import from Excel/CSV), settings, audit log, journal, reports |
 
 The teller never enters or sees a customer's PIN: withdrawals are approved by the student
 in the customer app.

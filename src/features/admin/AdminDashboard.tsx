@@ -1,5 +1,6 @@
 import { Link } from 'react-router'
 import { useCurrentUser } from '@/auth/context'
+import { Alert } from '@/components/Alert'
 import { Badge } from '@/components/Badge'
 import { buttonClass } from '@/components/Button'
 import { DataList, DataRow } from '@/components/DataList'
@@ -10,11 +11,12 @@ import { StatTile, StatTiles } from '@/components/StatTile'
 import { formatDate, jakartaToday } from '@/lib/datetime'
 import { formatRupiah } from '@/lib/money'
 import { useTrialBalance } from '@/features/audit/queries'
-import { useCustomerCount, useStaffCount } from './queries'
+import { useCustomerCount, usePendingPinResetCount, useStaffCount } from './queries'
 
 const TASKS: { to: string; label: string; description: string; icon: IconName }[] = [
   { to: '/customers/new', label: 'Buka rekening', description: 'Siswa baru; siswa mengaktifkan aplikasi sendiri', icon: 'plus' },
   { to: '/customers/import', label: 'Impor nasabah', description: 'Penabung lama dengan saldo dan riwayat (Excel/CSV)', icon: 'upload' },
+  { to: '/pin-reset-requests', label: 'Reset PIN', description: 'Setujui permintaan lupa PIN dari aplikasi', icon: 'lock' },
   { to: '/staff/new', label: 'Tambah staf', description: 'Teller atau supervisor', icon: 'users' },
   { to: '/staff/import', label: 'Impor staf', description: 'Daftar piket dari Excel atau CSV', icon: 'upload' },
   { to: '/admin/graduation', label: 'Kelulusan', description: 'Tutup rekening siswa yang lulus', icon: 'graduation' },
@@ -38,6 +40,7 @@ export function AdminDashboard() {
   const tellers = useStaffCount({ role: 'teller' })
   const supervisors = useStaffCount({ role: 'supervisor' })
   const trial = useTrialBalance({ from: today, to: today })
+  const pinResets = usePendingPinResetCount()
 
   return (
     <div className="flex flex-col gap-6">
@@ -54,6 +57,15 @@ export function AdminDashboard() {
         />
         <StatTile label="Ditutup (lulus)" to="/customers?status=closed" {...figure(closed)} />
       </StatTiles>
+
+      {(pinResets.data ?? 0) > 0 && (
+        <Alert tone="warning" title={`${pinResets.data} permintaan reset PIN menunggu persetujuan`}>
+          Penarikan rekening tersebut ditunda sampai permintaan diputuskan.{' '}
+          <Link to="/pin-reset-requests" className="font-medium underline">
+            Periksa permintaan
+          </Link>
+        </Alert>
+      )}
 
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
         <Section title="Tugas administrator">
