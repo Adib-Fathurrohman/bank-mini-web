@@ -13,7 +13,7 @@ import { Dialog, DialogActions } from '@/components/Dialog'
 import { Eyebrow, PageHeader, Panel } from '@/components/Page'
 import { EmptyState, LoadError, Loading } from '@/components/QueryStatus'
 import { formatDate, formatDateTime } from '@/lib/datetime'
-import { toDenominationsPayload, totalOfCounts, type DenominationCounts } from '@/lib/denominations'
+import { DENOMINATIONS, toDenominationsPayload, totalOfCounts, type DenominationCounts } from '@/lib/denominations'
 import { formatRupiah } from '@/lib/money'
 import { usePdf } from '@/lib/usePdf'
 import { DenominationCounter } from './components/DenominationCounter'
@@ -23,6 +23,51 @@ import { useRefreshTeller, useShift } from './queries'
 
 function signedRupiah(value: number): string {
   return value > 0 ? `+${formatRupiah(value)}` : value < 0 ? `−${formatRupiah(-value)}` : formatRupiah(0)
+}
+
+/** Per-note differences of a refused close (shifts that track the drawer), largest note first. */
+function DenominationDifferences({
+  rows,
+}: {
+  rows: Record<string, { expected: number; counted: number; difference: number }>
+}) {
+  const listed = DENOMINATIONS.filter((d) => rows[String(d)])
+  if (listed.length === 0) return null
+  return (
+    <table className="mt-2 w-full text-left text-xs" aria-label="Selisih per pecahan (sistem, hitungan, selisih)">
+      <thead>
+        <tr className="text-xs text-neg-700">
+          <th scope="col" className="py-1 pr-2 font-medium">
+            Pecahan
+          </th>
+          <th scope="col" className="py-1 pr-2 text-right font-medium">
+            Sistem
+          </th>
+          <th scope="col" className="py-1 pr-2 text-right font-medium">
+            Hitung
+          </th>
+          <th scope="col" className="py-1 text-right font-medium">
+            Selisih
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {listed.map((d) => {
+          const row = rows[String(d)]!
+          return (
+            <tr key={d} className="border-t border-neg-200">
+              <th scope="row" className="py-1 pr-2 font-medium">
+                {formatRupiah(d)}
+              </th>
+              <td className="py-1 pr-2 text-right">{row.expected}</td>
+              <td className="py-1 pr-2 text-right">{row.counted}</td>
+              <td className="py-1 text-right font-semibold">{row.difference > 0 ? `+${row.difference}` : row.difference}</td>
+            </tr>
+          )
+        })}
+      </tbody>
+    </table>
+  )
 }
 
 /** Counted vs expected, in words the teller acts on. */
@@ -196,14 +241,25 @@ export function CloseShiftPage() {
           {error &&
             !confirming &&
             (error.kind === 'cashMismatch' && error.cashMismatch ? (
-              <Alert title="Uang fisik tidak sesuai">
+              <Alert
+                title={
+                  error.cashMismatch.difference === 0 && Object.keys(error.cashMismatch.denominations).length > 0
+                    ? 'Total benar, tetapi pecahannya tidak sesuai'
+                    : 'Uang fisik tidak sesuai'
+                }
+              >
                 <p>{error.message}</p>
                 <p className="mt-1">
                   Sistem {formatRupiah(error.cashMismatch.system_balance)} · fisik{' '}
                   {formatRupiah(error.cashMismatch.physical_balance)} · selisih{' '}
                   {signedRupiah(error.cashMismatch.difference)}
                 </p>
-                <p className="mt-1">Hitung ulang, periksa slip, atau koreksi transaksi yang salah.</p>
+                <DenominationDifferences rows={error.cashMismatch.denominations} />
+                <p className="mt-2">
+                  {error.cashMismatch.difference === 0 && Object.keys(error.cashMismatch.denominations).length > 0
+                    ? 'Jumlahnya cocok, tetapi komposisi pecahan di laci berbeda dari catatan sistem. Hitung ulang per pecahan.'
+                    : 'Hitung ulang, periksa slip, atau koreksi transaksi yang salah.'}
+                </p>
               </Alert>
             ) : (
               <Alert title="Shift tidak ditutup">{error.fieldUnder('denominations') ?? error.message}</Alert>

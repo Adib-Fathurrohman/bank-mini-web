@@ -19,7 +19,12 @@ export interface CashMismatch {
   system_balance: number
   physical_balance: number
   difference: number
+  /** Tracked shifts: every denomination that differs. `difference: 0` overall means right total, wrong notes. */
+  denominations: Record<string, { expected: number; counted: number; difference: number }>
 }
+
+/** `422 drawer_insufficient`: what was asked of a denomination vs what the drawer holds. */
+export type CashShortages = Record<string, { requested: number; available: number }>
 
 export interface PinFailure {
   remaining_attempts: number
@@ -47,6 +52,10 @@ export class ApiError extends Error {
   readonly pinFailure: PinFailure | null
   /** Machine-readable reason some refusals carry (e.g. `pin_not_set`). */
   readonly code: string | null
+  /** `drawer_insufficient`: denominations the drawer cannot cover. */
+  readonly shortages: CashShortages | null
+  /** Other fields of a 409/422 body (e.g. `missing_customer_ids`), for the few screens that need them. */
+  readonly extra: Record<string, unknown>
 
   constructor(init: {
     kind: ApiErrorKind
@@ -56,6 +65,8 @@ export class ApiError extends Error {
     cashMismatch?: CashMismatch | null
     pinFailure?: PinFailure | null
     code?: string | null
+    shortages?: CashShortages | null
+    extra?: Record<string, unknown>
     cause?: unknown
   }) {
     super(init.message, { cause: init.cause })
@@ -66,6 +77,8 @@ export class ApiError extends Error {
     this.cashMismatch = init.cashMismatch ?? null
     this.pinFailure = init.pinFailure ?? null
     this.code = init.code ?? null
+    this.shortages = init.shortages ?? null
+    this.extra = init.extra ?? {}
   }
 
   /** First message for a field, translated to Indonesian where it is a Laravel default. */
@@ -119,7 +132,7 @@ export function errorFromResponse(status: number, body: unknown): ApiError {
   }
   if (status === 403) return new ApiError({ kind: 'auth', status, message, code })
   if (status === 404) return new ApiError({ kind: 'notFound', status, message: serverMessage || 'Data tidak ditemukan.' })
-  if (status === 409) return new ApiError({ kind: 'conflict', status, message, code })
+  if (status === 409) return new ApiError({ kind: 'conflict', status, message, code, extra: record })
 
   if (status === 422) {
     if (isFieldErrors(record.errors)) {
@@ -138,6 +151,7 @@ export function errorFromResponse(status: number, body: unknown): ApiError {
           system_balance: record.system_balance,
           physical_balance: record.physical_balance,
           difference: record.difference,
+          denominations: isRecord(record.denominations) ? (record.denominations as CashMismatch['denominations']) : {},
         },
       })
     }
@@ -152,7 +166,14 @@ export function errorFromResponse(status: number, body: unknown): ApiError {
         },
       })
     }
-    return new ApiError({ kind: 'business', status, message, code })
+    return new ApiError({
+      kind: 'business',
+      status,
+      message,
+      code,
+      shortages: isRecord(record.shortages) ? (record.shortages as CashShortages) : null,
+      extra: record,
+    })
   }
 
   return new ApiError({ kind: 'unexpected', status, message })

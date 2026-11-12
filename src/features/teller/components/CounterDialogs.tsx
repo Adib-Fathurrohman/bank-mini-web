@@ -9,10 +9,12 @@ import { Button } from '@/components/Button'
 import { DataList, DataRow } from '@/components/DataList'
 import { DialogActions } from '@/components/Dialog'
 import { Icon } from '@/components/Icon'
+import { matchesAmount, toNotesPayload, type DenominationCounts } from '@/lib/denominations'
 import { newIdempotencyKey } from '@/lib/idempotency'
 import { formatRupiah } from '@/lib/money'
 import { terbilangRupiah } from '@/lib/terbilang'
 import type { WithdrawalFlow } from '../withdrawalAuthorization'
+import { NotesGrid } from './NotesGrid'
 
 export type CounterTransactionType = 'deposit' | 'withdrawal'
 
@@ -51,24 +53,34 @@ function ReviewSummary({
 /**
  * T4 deposit: review → submit → hand the recorded transaction back. Mounted
  * once per confirmation, so each gets its own Idempotency-Key, reused for every
- * retry of that submission.
+ * retry of that submission. In a shift that tracks the drawer per denomination
+ * (`tracked`), the teller also enters the notes received ("Uang diterima"); they
+ * must add up to the amount, because no change is given.
  */
 export function DepositReview({
   customer,
   amount,
+  tracked = false,
   onPendingChange,
   onRecorded,
   onCancel,
 }: {
   customer: CustomerSummary
   amount: number
+  /** The shift tracks the drawer per denomination: ask for the notes received. */
+  tracked?: boolean
   onPendingChange: (pending: boolean) => void
   onRecorded: (result: RecordedTransaction) => void
   onCancel: () => void
 }) {
   const [idempotencyKey] = useState(newIdempotencyKey)
+  const [notes, setNotes] = useState<DenominationCounts>({})
   const mutation = useMutation<RecordedTransaction, ApiError>({
-    mutationFn: () => deposit({ account_number: customer.account_number, amount }, idempotencyKey),
+    mutationFn: () =>
+      deposit(
+        { account_number: customer.account_number, amount, ...(tracked ? { denominations: toNotesPayload(notes) } : {}) },
+        idempotencyKey,
+      ),
     onMutate: () => onPendingChange(true),
     onSettled: () => onPendingChange(false),
     onSuccess: onRecorded,
@@ -76,15 +88,32 @@ export function DepositReview({
 
   const error = mutation.error
   const pending = mutation.isPending
+  const notesReady = !tracked || matchesAmount(amount, notes)
+  // After a lost response the same submission must be repeated unchanged (same key, same notes).
+  const locked = pending || error?.kind === 'network'
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault()
-    if (!pending) mutation.mutate()
+    if (!pending && notesReady) mutation.mutate()
   }
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <ReviewSummary type="deposit" customer={customer} amount={amount} />
+
+      {tracked && (
+        <NotesGrid
+          label="Uang diterima"
+          amount={amount}
+          counts={notes}
+          onChange={(next) => {
+            setNotes(next)
+            // A refusal was about the previous notes.
+            if (mutation.isError && error?.kind !== 'network') mutation.reset()
+          }}
+          disabled={locked}
+        />
+      )}
 
       {error?.kind === 'network' ? (
         <Alert tone="warning" title="Status setoran belum diketahui">
@@ -94,7 +123,7 @@ export function DepositReview({
       ) : (
         error && (
           <Alert title="Setoran tidak dicatat">
-            {error.field('amount') ?? error.field('account_number') ?? error.message}
+            {error.field('amount') ?? error.field('account_number') ?? error.fieldUnder('denominations') ?? error.message}
           </Alert>
         )
       )}
@@ -103,7 +132,7 @@ export function DepositReview({
         <Button variant="secondary" disabled={pending} onClick={onCancel}>
           Ubah
         </Button>
-        <Button type="submit" loading={pending} data-autofocus>
+        <Button type="submit" loading={pending} disabled={!notesReady} data-autofocus={!tracked || undefined}>
           {error?.kind === 'network' ? 'Kirim ulang' : `Setor ${formatRupiah(amount)}`}
         </Button>
       </DialogActions>

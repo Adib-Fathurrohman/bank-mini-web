@@ -1,6 +1,15 @@
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'
 import { fetchCustomerCard, fetchPinResetRequests, type PinResetFilters } from '@/api/endpoints/admin'
+import {
+  fetchClassPromotion,
+  fetchClassPromotions,
+  fetchGraduation,
+  fetchGraduations,
+  previewClassPromotion,
+  previewGraduation,
+  type GraduationScope,
+} from '@/api/endpoints/graduation'
 import { fetchCustomers, fetchStaffList, type CustomerFilters, type StaffFilters } from '@/api/endpoints/directory'
 import type { Customer } from '@/api/types'
 
@@ -93,4 +102,76 @@ export function useOpenPinReset(customerId: number) {
 export function useRefreshPinResets() {
   const queryClient = useQueryClient()
   return useCallback(() => queryClient.invalidateQueries({ queryKey: ['pin-resets'] }), [queryClient])
+}
+
+// Graduation (kelulusan) and class promotion (kenaikan kelas), backend v0.3.0.
+export const schoolYearKeys = {
+  graduationPreview: (scope: GraduationScope) => ['graduations', 'preview', scope] as const,
+  graduations: (page: number) => ['graduations', 'list', page] as const,
+  graduation: (id: string) => ['graduations', 'one', id] as const,
+  promotionPreview: ['class-promotions', 'preview'] as const,
+  promotions: (page: number) => ['class-promotions', 'list', page] as const,
+  promotion: (id: string) => ['class-promotions', 'one', id] as const,
+}
+
+/** Always fresh: the run is refused (409) when the class changed since the preview. */
+export function useGraduationPreview(scope: GraduationScope) {
+  return useQuery({
+    queryKey: schoolYearKeys.graduationPreview(scope),
+    queryFn: () => previewGraduation(scope),
+    staleTime: 0,
+    gcTime: 0,
+  })
+}
+
+export function useGraduations(page: number) {
+  return useQuery({
+    queryKey: schoolYearKeys.graduations(page),
+    queryFn: () => fetchGraduations(page),
+    placeholderData: keepPreviousData,
+  })
+}
+
+export function useGraduation(id: string) {
+  return useQuery({
+    queryKey: schoolYearKeys.graduation(id),
+    queryFn: async () => (await fetchGraduation(id)).data,
+  })
+}
+
+export function useClassPromotionPreview() {
+  return useQuery({
+    queryKey: schoolYearKeys.promotionPreview,
+    queryFn: previewClassPromotion,
+    staleTime: 0,
+    gcTime: 0,
+  })
+}
+
+export function useClassPromotions(page: number) {
+  return useQuery({
+    queryKey: schoolYearKeys.promotions(page),
+    queryFn: () => fetchClassPromotions(page),
+    placeholderData: keepPreviousData,
+  })
+}
+
+export function useClassPromotion(id: string) {
+  return useQuery({
+    queryKey: schoolYearKeys.promotion(id),
+    queryFn: async () => (await fetchClassPromotion(id)).data,
+  })
+}
+
+/** After a graduation or a promotion: accounts, classes, balances, previews and histories all changed. */
+export function useRefreshSchoolYear() {
+  const queryClient = useQueryClient()
+  return useCallback(async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['directory'] }),
+      queryClient.invalidateQueries({ queryKey: ['graduations'] }),
+      queryClient.invalidateQueries({ queryKey: ['class-promotions'] }),
+      queryClient.invalidateQueries({ queryKey: ['audit'] }),
+    ])
+  }, [queryClient])
 }

@@ -19,6 +19,9 @@ export type WithdrawalAuthorizationStatus = 'pending' | 'approved' | 'consumed' 
 export interface Staff {
   id: number
   username: string
+  /** Optional. Password reset by email works only once it is verified. */
+  email: string | null
+  email_verified: boolean
   full_name: string
   class: string | null
   phone: string | null
@@ -100,6 +103,18 @@ export interface Transaction {
   teller?: PersonRef
   /** Withdrawals approved by the customer in the mobile app (returned by `complete` and audit detail). */
   withdrawal_authorization?: { id: string; method: 'mobile'; approved_at: string } | null
+  /**
+   * Notes into (deposit, withdrawal correction) or out of (withdrawal, deposit correction)
+   * the teller's drawer. Empty for shifts before per-note tracking and for imports.
+   */
+  cash?: CashNote[]
+  /** Public id of the graduation batch when this is a graduation payout (v0.3.0). */
+  graduation_id?: string | null
+}
+
+export interface CashNote {
+  denomination: number
+  quantity: number
 }
 
 export interface CashCount {
@@ -125,6 +140,8 @@ export interface DailyReport {
   supervisor_note: string | null
   teller?: PersonRef & { class: string | null }
   supervisor?: PersonRef | null
+  /** The drawer is tracked per denomination (shifts opened from backend v0.3.0). */
+  cash_tracked?: boolean
   opening_counts?: CashCount[]
   closing_counts?: CashCount[]
   cash_transfer?: { id: number; amount: number; transferred_at: string } | null
@@ -184,7 +201,13 @@ export interface TrialBalance {
 
 /** `GET /teller/shift` */
 export type ShiftState =
-  | { data: DailyReport; can_transact: boolean; transactions: Transaction[] }
+  | {
+      data: DailyReport
+      can_transact: boolean
+      transactions: Transaction[]
+      /** What the drawer should hold now, per denomination; null for a shift opened before v0.3.0. */
+      drawer?: CashCount[] | null
+    }
   | { data: null; can_transact: false; closed_today: boolean }
 
 export interface Settings {
@@ -243,6 +266,84 @@ export interface PinResetRequest {
   customer: CustomerSummary
   /** Name of the administrator who approved or rejected it. */
   decided_by: string | null
+}
+
+/** Graduation (kelulusan), backend v0.3.0: the whole class is paid out in full and closed. */
+export interface GraduationPreviewRow extends CustomerSummary {
+  /** Paid out in full; the minimum balance no longer applies once the account closes. */
+  payout: number
+}
+
+export interface GraduationPreview {
+  data: GraduationPreviewRow[]
+  summary: { customer_count: number; paid_count: number; total_amount: number }
+}
+
+export interface GraduatedCustomer {
+  id: number
+  account_number: string
+  nis: string
+  full_name: string
+  class: CustomerClass
+  major_code: string | null
+  group: CustomerGroup
+  /** 0: the account was empty and only closed. */
+  amount: number
+  transaction_id: number | null
+}
+
+export interface Graduation {
+  /** ULID */
+  id: string
+  label: string
+  class: CustomerClass
+  major: Major | null
+  group: CustomerGroup | null
+  customer_count: number
+  paid_count: number
+  total_amount: number
+  total_amount_in_words: string
+  note: string | null
+  executed_by?: PersonRef
+  created_at: string
+  /** Only on the detail and the result of the run. */
+  customers?: GraduatedCustomer[]
+}
+
+/** Kenaikan kelas (class promotion), backend v0.3.0: X → XI and XI → XII once a year. */
+export interface ClassPromotionPreviewRow extends CustomerSummary {
+  next_class: CustomerClass
+}
+
+export interface ClassPromotionPreview {
+  data: ClassPromotionPreviewRow[]
+  summary: {
+    school_year: string
+    x_count: number
+    xi_count: number
+    open_xii_count: number
+    already_done: boolean
+    can_run: boolean
+  }
+}
+
+export interface ClassPromotion {
+  /** ULID */
+  id: string
+  school_year: string
+  promoted_count: number
+  retained_count: number
+  note: string | null
+  executed_by?: PersonRef
+  created_at: string
+  items?: Array<{
+    customer_id: number
+    account_number: string
+    full_name: string
+    from_class: CustomerClass
+    to_class: CustomerClass
+    retained: boolean
+  }>
 }
 
 export interface Paginated<T> {

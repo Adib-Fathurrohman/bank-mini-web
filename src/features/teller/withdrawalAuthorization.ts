@@ -6,6 +6,7 @@ import {
   createWithdrawalAuthorization,
   fetchOpenWithdrawalAuthorizations,
   fetchWithdrawalAuthorization,
+  type NotesPayload,
   type RecordedTransaction,
 } from '@/api/endpoints/teller'
 import type { ApiError } from '@/api/errors'
@@ -103,8 +104,9 @@ export function useWithdrawalAuthorization() {
     onError: () => void authorization.refetch(),
   })
 
-  const complete = useMutation<RecordedTransaction, ApiError>({
-    mutationFn: () => completeWithdrawalAuthorization(id!),
+  // `denominations`: the notes actually paid out (shifts that track the drawer per note).
+  const complete = useMutation<RecordedTransaction, ApiError, NotesPayload | undefined>({
+    mutationFn: (denominations) => completeWithdrawalAuthorization(id!, denominations),
     onSuccess: (result) => {
       setRecorded(result)
       void refresh()

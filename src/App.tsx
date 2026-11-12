@@ -12,11 +12,19 @@ import { StaffFormPage } from '@/features/admin/StaffFormPage'
 import { StaffImportPage } from '@/features/admin/StaffImportPage'
 import { CustomerImportPage } from '@/features/admin/CustomerImportPage'
 import { PinResetRequestsPage } from '@/features/admin/PinResetRequestsPage'
+import { ClassPromotionDetailPage } from '@/features/admin/ClassPromotionDetailPage'
+import { ClassPromotionHistoryPage } from '@/features/admin/ClassPromotionHistoryPage'
+import { ClassPromotionPage } from '@/features/admin/ClassPromotionPage'
+import { GraduationDetailPage } from '@/features/admin/GraduationDetailPage'
+import { GraduationHistoryPage } from '@/features/admin/GraduationHistoryPage'
 import { AuditLogPage } from '@/features/audit/AuditLogPage'
 import { AuditTransactionPage } from '@/features/audit/AuditTransactionPage'
 import { ExportsPage } from '@/features/audit/ExportsPage'
 import { JournalPage } from '@/features/audit/JournalPage'
+import { ForgotPasswordPage } from '@/features/auth/ForgotPasswordPage'
 import { LoginPage } from '@/features/auth/LoginPage'
+import { ResetPasswordPage } from '@/features/auth/ResetPasswordPage'
+import { ProfilePage } from '@/features/profile/ProfilePage'
 import { CustomerDetailPage } from '@/features/directory/CustomerDetailPage'
 import { CustomersPage } from '@/features/directory/CustomersPage'
 import { StaffDetailPage } from '@/features/directory/StaffDetailPage'
@@ -33,7 +41,7 @@ import { ReportReviewPage } from '@/features/supervisor/ReportReviewPage'
 import { ReportsPage } from '@/features/supervisor/ReportsPage'
 import { SupervisorDashboard } from '@/features/supervisor/SupervisorDashboard'
 import { VaultPage } from '@/features/supervisor/VaultPage'
-import { StaffLayout } from '@/layouts/StaffLayout'
+import { RoleLayout, StaffLayout } from '@/layouts/StaffLayout'
 
 // The router follows Vite's base (vite.config.ts): '/api' in production, '/' in development.
 const ROUTER_BASENAME = import.meta.env.BASE_URL.replace(/\/+$/, '') || '/'
@@ -46,6 +54,14 @@ export function App() {
           <Routes>
             <Route path="/" element={<HomeRedirect />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
+
+            <Route element={<RequireRole roles={['admin', 'supervisor', 'teller']} />}>
+              <Route element={<RoleLayout />}>
+                <Route path="/profile" element={<ProfilePage />} />
+              </Route>
+            </Route>
 
             <Route element={<RequireRole roles={['teller']} />}>
               <Route element={<TellerLayout />}>
@@ -78,6 +94,10 @@ export function App() {
                 <Route path="/audit/journals" element={<JournalPage />} />
                 <Route path="/reports" element={<ExportsPage />} />
                 <Route path="/pin-reset-requests" element={<PinResetRequestsPage />} />
+                <Route path="/graduations" element={<GraduationHistoryPage />} />
+                <Route path="/graduations/:id" element={<GraduationDetailPage />} />
+                <Route path="/class-promotions" element={<ClassPromotionHistoryPage />} />
+                <Route path="/class-promotions/:id" element={<ClassPromotionDetailPage />} />
               </Route>
             </Route>
 
@@ -86,6 +106,7 @@ export function App() {
                 <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/admin/settings" element={<SettingsPage />} />
                 <Route path="/admin/graduation" element={<GraduationPage />} />
+                <Route path="/admin/class-promotion" element={<ClassPromotionPage />} />
                 <Route path="/customers/new" element={<CustomerFormPage />} />
                 <Route path="/customers/import" element={<CustomerImportPage />} />
                 <Route path="/customers/:id/edit" element={<CustomerFormPage />} />

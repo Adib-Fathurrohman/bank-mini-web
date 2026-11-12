@@ -16,6 +16,8 @@ export interface AuthContextValue {
   logout: (message?: string | null) => Promise<void>
   retry: () => Promise<void>
   clearNotice: () => void
+  /** The own account changed (email): keep the session and show the new data. */
+  updateUser: (user: Staff) => void
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null)

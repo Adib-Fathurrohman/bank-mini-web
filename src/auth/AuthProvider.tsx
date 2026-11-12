@@ -88,9 +88,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [dropSession],
   )
 
+  const updateUser = useCallback((user: Staff) => {
+    const stored = readSession()
+    if (stored) writeSession({ ...stored, user })
+    setState({ status: 'authenticated', user })
+  }, [])
+
   const value = useMemo(
-    () => ({ state, notice, login, logout, retry: validate, clearNotice: () => setNotice(null) }),
-    [state, notice, login, logout, validate],
+    () => ({ state, notice, login, logout, retry: validate, clearNotice: () => setNotice(null), updateUser }),
+    [state, notice, login, logout, validate, updateUser],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

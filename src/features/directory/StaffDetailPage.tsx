@@ -89,6 +89,18 @@ export function StaffDetailPage() {
           </DataRow>
           <DataRow label="Nama lengkap">{s.full_name}</DataRow>
           <DataRow label="Peran">{ROLE_LABEL[s.role]}</DataRow>
+          <DataRow label="Email">
+            {s.email ? (
+              <span className="flex flex-wrap items-center justify-end gap-2">
+                {s.email}
+                <Badge tone={s.email_verified ? 'success' : 'warning'}>
+                  {s.email_verified ? 'Terverifikasi' : 'Belum diverifikasi'}
+                </Badge>
+              </span>
+            ) : (
+              '—'
+            )}
+          </DataRow>
           <DataRow label="Kelas">{s.class ?? '—'}</DataRow>
           <DataRow label="No. HP" mono>
             {s.phone ?? '—'}

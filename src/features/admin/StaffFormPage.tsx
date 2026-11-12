@@ -26,6 +26,7 @@ function StaffForm({ existing }: { existing: Staff | null }) {
   const [role, setRole] = useState<Role>(existing?.role === 'supervisor' ? 'supervisor' : 'teller')
   const [klass, setKlass] = useState(existing?.class ?? '')
   const [phone, setPhone] = useState(existing?.phone ?? '')
+  const [email, setEmail] = useState(existing?.email ?? '')
   const [localError, setLocalError] = useState<string | null>(null)
 
   const mutation = useMutation<Staff, ApiError>({
@@ -36,6 +37,8 @@ function StaffForm({ existing }: { existing: Staff | null }) {
         role,
         class: klass.trim() || null,
         phone: phone.trim() || null,
+        // A new or changed address gets a verification link; an unchanged one is left alone by the backend.
+        email: email.trim() || null,
       }
       if (password) body.password = password
       return (existing ? await updateStaff(existing.id, body) : await createStaff(body)).data
@@ -98,6 +101,21 @@ function StaffForm({ existing }: { existing: Staff | null }) {
             disabled={pending}
             error={localError ?? fieldError(error, 'password')}
             hint={existing ? 'Kosongkan agar password tidak diganti.' : 'Minimal 8 karakter. Sampaikan langsung ke staf.'}
+          />
+          <TextField
+            label="Email"
+            type="email"
+            autoComplete="off"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            maxLength={255}
+            disabled={pending}
+            error={fieldError(error, 'email')}
+            hint={
+              existing?.email && existing.email !== email.trim()
+                ? 'Email baru harus diverifikasi staf lewat tautan yang dikirim.'
+                : 'Opsional. Dipakai untuk reset password; staf memverifikasinya lewat tautan yang dikirim.'
+            }
           />
           <TextField
             label="No. HP / WhatsApp"

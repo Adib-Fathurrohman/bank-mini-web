@@ -41,7 +41,35 @@ describe('errorFromResponse', () => {
       difference: -2000,
     })
     expect(error.kind).toBe('cashMismatch')
-    expect(error.cashMismatch).toEqual({ system_balance: 252000, physical_balance: 250000, difference: -2000 })
+    expect(error.cashMismatch).toEqual({ system_balance: 252000, physical_balance: 250000, difference: -2000, denominations: {} })
+  })
+
+  it('reads the per-denomination differences of a tracked shift, also for a right total with wrong notes', () => {
+    const error = errorFromResponse(422, {
+      message: 'Total benar, tetapi pecahan tidak sesuai: Rp50.000 lebih 1; Rp20.000 kurang 2.',
+      system_balance: 150000,
+      physical_balance: 150000,
+      difference: 0,
+      denominations: {
+        '50000': { expected: 0, counted: 1, difference: 1 },
+        '20000': { expected: 2, counted: 0, difference: -2 },
+      },
+    })
+    expect(error.kind).toBe('cashMismatch')
+    expect(error.cashMismatch?.difference).toBe(0)
+    expect(error.cashMismatch?.denominations['50000']).toEqual({ expected: 0, counted: 1, difference: 1 })
+  })
+
+  it('reads the drawer shortages of a cash refusal', () => {
+    const error = errorFromResponse(422, {
+      message: 'Pecahan tidak tersedia di laci: Rp10.000 diminta 2, tersedia 1.',
+      code: 'drawer_insufficient',
+      shortages: { '10000': { requested: 2, available: 1 } },
+    })
+    expect(error.kind).toBe('business')
+    expect(error.code).toBe('drawer_insufficient')
+    expect(error.shortages).toEqual({ '10000': { requested: 2, available: 1 } })
+    expect(errorFromResponse(422, { message: 'x', code: 'cash_breakdown_mismatch' }).shortages).toBeNull()
   })
 
   it('reads the PIN failure extras', () => {

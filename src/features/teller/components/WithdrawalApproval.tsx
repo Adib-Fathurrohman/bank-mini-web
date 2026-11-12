@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { fetchReceiptPdf } from '@/api/endpoints/teller'
 import type { WithdrawalAuthorization } from '@/api/types'
 import { Alert } from '@/components/Alert'
@@ -9,9 +9,11 @@ import { Icon } from '@/components/Icon'
 import { Eyebrow, Panel } from '@/components/Page'
 import { Spinner } from '@/components/Spinner'
 import { formatTime } from '@/lib/datetime'
+import { countsFromList, fillFromDrawer, matchesAmount, toNotesPayload, type DenominationCounts } from '@/lib/denominations'
 import { formatRupiah } from '@/lib/money'
 import { usePdf } from '@/lib/usePdf'
 import { authorizationWindow, useCountdown, type WithdrawalFlow } from '../withdrawalAuthorization'
+import { NotesGrid } from './NotesGrid'
 import { TransactionReceipt } from './TransactionReceipt'
 
 const STATUS_TONE: Record<WithdrawalAuthorization['status'], BadgeTone> = {
@@ -155,14 +157,22 @@ function stepsFor(a: WithdrawalAuthorization): Array<{ label: string; detail?: s
  */
 export function WithdrawalApproval({
   flow,
+  drawer,
   onAnotherTransaction,
   onNextCustomer,
 }: {
   flow: WithdrawalFlow
+  /** What the drawer holds now (shift tracked per denomination), or null for an older shift. */
+  drawer: Array<{ denomination: number; quantity: number }> | null
   onAnotherTransaction: () => void
   onNextCustomer: () => void
 }) {
   const a = flow.current
+  const tracked = drawer !== null
+  const held = countsFromList(drawer)
+  const [paid, setPaid] = useState<DenominationCounts>({})
+  const [autoFillFailed, setAutoFillFailed] = useState(false)
+  const notesReady = !tracked || (a !== null && matchesAmount(a.amount, paid))
   const pdf = usePdf()
   const completeRef = useRef<HTMLButtonElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
@@ -174,10 +184,27 @@ export function WithdrawalApproval({
     if (a?.id) panelRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
   }, [a?.id])
 
-  // When the customer approves, put the teller's next action under Enter.
+  // A different request starts with an empty grid.
   useEffect(() => {
-    if (a?.status === 'approved') completeRef.current?.focus()
-  }, [a?.status])
+    setPaid({})
+    setAutoFillFailed(false)
+  }, [a?.id])
+
+  // When the customer approves, put the teller's next action under Enter (with notes to enter, the grid comes first).
+  useEffect(() => {
+    if (a?.status === 'approved' && !tracked) completeRef.current?.focus()
+  }, [a?.status, tracked])
+
+  function complete() {
+    flow.complete.mutate(tracked ? toNotesPayload(paid) : undefined)
+  }
+
+  function autoFill() {
+    if (!a) return
+    const filled = fillFromDrawer(a.amount, held)
+    setAutoFillFailed(filled === null)
+    if (filled) setPaid(filled)
+  }
 
   if (flow.recorded) {
     const { transaction, replayed } = flow.recorded
@@ -250,9 +277,35 @@ export function WithdrawalApproval({
       break
     case 'approved':
       message = (
-        <Alert tone="success" title="Nasabah sudah menyetujui">
-          Selesaikan penarikan sebelum waktu habis, lalu serahkan uang tunai {formatRupiah(a.amount)}.
-        </Alert>
+        <>
+          <Alert tone="success" title="Nasabah sudah menyetujui">
+            {tracked
+              ? `Ambil uang dari laci dan isi pecahan yang diserahkan, lalu selesaikan penarikan sebelum waktu habis.`
+              : `Selesaikan penarikan sebelum waktu habis, lalu serahkan uang tunai ${formatRupiah(a.amount)}.`}
+          </Alert>
+          {tracked && (
+            <NotesGrid
+              label="Uang dibayarkan"
+              amount={a.amount}
+              counts={paid}
+              onChange={(next) => {
+                setPaid(next)
+                // A refusal was about the previous notes.
+                if (flow.complete.isError && flow.complete.error?.kind !== 'network') flow.complete.reset()
+              }}
+              limits={held}
+              shortages={flow.complete.error?.shortages}
+              onAutoFill={autoFill}
+              disabled={flow.complete.isPending || flow.complete.error?.kind === 'network'}
+            />
+          )}
+          {autoFillFailed && (
+            <Alert tone="warning">
+              Uang di laci tidak dapat membayar {formatRupiah(a.amount)} dengan pecahan yang tersedia. Pilih pecahan sendiri
+              atau minta nasabah mengurangi nominal.
+            </Alert>
+          )}
+        </>
       )
       actions = (
         <>
@@ -269,7 +322,8 @@ export function WithdrawalApproval({
             size="lg"
             icon="check"
             loading={flow.complete.isPending}
-            onClick={() => flow.complete.mutate()}
+            disabled={!notesReady}
+            onClick={complete}
           >
             {flow.complete.error?.kind === 'network' ? 'Kirim ulang' : 'Selesaikan penarikan'}
           </Button>
@@ -380,7 +434,7 @@ export function WithdrawalApproval({
         </div>
       </div>
 
-      <div className="flex flex-col-reverse gap-2 border-t border-ink-200 bg-ink-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-end sm:px-5">
+      <div className="flex flex-col-reverse gap-2 border-t border-ink-200 bg-ink-50 px-4 py-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:px-5">
         {final && (
           <Button variant="ghost" className="sm:mr-auto" onClick={onNextCustomer}>
             Nasabah berikutnya

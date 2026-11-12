@@ -1,4 +1,4 @@
-import type { DailyReport, ShiftState, Transaction } from '@/api/types'
+import type { CashCount, DailyReport, ShiftState, Transaction } from '@/api/types'
 
 // Interprets GET /teller/shift. Every teller page
 // decides what to offer from this; the backend still re-checks each request.
@@ -6,13 +6,14 @@ import type { DailyReport, ShiftState, Transaction } from '@/api/types'
 export type ShiftGate =
   | { kind: 'none' } // no shift yet today: open-shift form
   | { kind: 'closedToday' } // today's shift was closed: history only
-  | { kind: 'running'; shift: DailyReport; transactions: Transaction[] } // open, today
-  | { kind: 'rejected'; shift: DailyReport; transactions: Transaction[] } // reopened by a supervisor, today
-  | { kind: 'stale'; shift: DailyReport; transactions: Transaction[] } // active shift from an earlier day
+  | { kind: 'running'; shift: DailyReport; transactions: Transaction[]; drawer: CashCount[] | null } // open, today
+  | { kind: 'rejected'; shift: DailyReport; transactions: Transaction[]; drawer: CashCount[] | null } // reopened by a supervisor, today
+  | { kind: 'stale'; shift: DailyReport; transactions: Transaction[]; drawer: CashCount[] | null } // active shift from an earlier day
 
 export function shiftGate(state: ShiftState): ShiftGate {
   if (state.data === null) return state.closed_today ? { kind: 'closedToday' } : { kind: 'none' }
-  const active = { shift: state.data, transactions: state.transactions }
+  // `drawer` is null for a shift opened before per-denomination tracking (v0.3.0): the old flow.
+  const active = { shift: state.data, transactions: state.transactions, drawer: state.drawer ?? null }
   if (!state.can_transact) return { kind: 'stale', ...active }
   return state.data.status === 'rejected' ? { kind: 'rejected', ...active } : { kind: 'running', ...active }
 }

@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Navigate, useLocation, useNavigate } from 'react-router'
+import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router'
 import { isApiError, networkError, type ApiError } from '@/api/errors'
 import { useAuth } from '@/auth/context'
 import { ROLE_HOME } from '@/auth/session'
@@ -12,12 +12,18 @@ export function LoginPage() {
   const { state, notice, login, clearNotice } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+  const [params] = useSearchParams()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<ApiError | null>(null)
 
   if (state.status === 'authenticated' && !pending) {
+    // The link in the verification email lands here: someone already signed in sees the outcome on the profile.
+    const verifiedParam = params.get('email_verified')
+    if (verifiedParam === '1' || verifiedParam === '0') {
+      return <Navigate to={`/profile?email_verified=${verifiedParam}`} replace />
+    }
     return <Navigate to={ROLE_HOME[state.user.role]} replace />
   }
 
@@ -40,6 +46,10 @@ export function LoginPage() {
     }
   }
 
+  // Messages handed over by other pages and by the links in emails.
+  const success = (location.state as { success?: string } | null)?.success
+  const verified = params.get('email_verified')
+
   // Wrong credentials and blocked accounts come back as a 422 on `username`.
   const usernameError = error?.field('username')
   const passwordError = error?.field('password')
@@ -61,6 +71,9 @@ export function LoginPage() {
           noValidate
           className="flex flex-col gap-4 rounded-xl border border-ink-200 bg-white p-6"
         >
+          {success && <Alert tone="success">{success}</Alert>}
+          {verified === '1' && <Alert tone="success">Email berhasil diverifikasi.</Alert>}
+          {verified === '0' && <Alert tone="warning">Tautan verifikasi tidak valid atau kedaluwarsa.</Alert>}
           {notice && <Alert tone="warning">{notice}</Alert>}
           {bannerError && <Alert>{bannerError}</Alert>}
 
@@ -91,7 +104,10 @@ export function LoginPage() {
         </form>
 
         <p className="mt-5 text-center text-[13px] leading-relaxed text-ink-500">
-          Lupa password? Hubungi administrator.
+          <Link to="/forgot-password" className="font-medium text-brand-700 hover:underline">
+            Lupa password?
+          </Link>{' '}
+          Atur ulang lewat email, atau hubungi administrator.
           <br />
           Nasabah masuk melalui aplikasi Bank Mini di ponsel.
         </p>

@@ -117,6 +117,8 @@ export function CounterPage() {
   const mode = settings.data?.qr_scanner_mode ?? 'disabled'
   const minBalance = settings.data?.min_balance
   const transactAllowed = shift.data ? canTransact(shift.data) : false
+  // Shifts opened from backend v0.3.0 track the drawer per denomination; older ones keep the total-only flow.
+  const drawer = shift.data && 'drawer' in shift.data ? shift.data.drawer : null
   const withdrawalInProgress =
     flow.id !== null && !flow.recorded && (!flow.current || isOpenAuthorization(flow.current.status))
 
@@ -233,7 +235,9 @@ export function CounterPage() {
 
   let workArea
   if (flow.id !== null) {
-    workArea = <WithdrawalApproval flow={flow} onAnotherTransaction={anotherTransaction} onNextCustomer={nextCustomer} />
+    workArea = (
+      <WithdrawalApproval flow={flow} drawer={drawer} onAnotherTransaction={anotherTransaction} onNextCustomer={nextCustomer} />
+    )
   } else if (deposited) {
     const { transaction, replayed } = deposited
     workArea = (
@@ -428,7 +432,7 @@ export function CounterPage() {
         onClose={closeReview}
         dismissable={!depositPending && !flow.create.isPending}
         title={type === 'deposit' ? 'Konfirmasi setor tunai' : 'Kirim permintaan tarik tunai'}
-        size="sm"
+        size={type === 'deposit' && drawer !== null ? 'md' : 'sm'}
       >
         {customer &&
           amount !== null &&
@@ -436,6 +440,7 @@ export function CounterPage() {
             <DepositReview
               customer={customer}
               amount={amount}
+              tracked={drawer !== null}
               onPendingChange={setDepositPending}
               onCancel={closeReview}
               onRecorded={(result) => {

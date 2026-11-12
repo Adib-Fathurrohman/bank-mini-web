@@ -125,6 +125,11 @@ export function StaffPage() {
                     <td className="max-w-64 py-2.5 pr-3 pl-4">
                       <span className="block truncate text-ink-900">{s.full_name}</span>
                       <span className="font-mono text-xs text-ink-500">{s.username}</span>
+                      {s.email && !s.email_verified && (
+                        <span className="ml-2 align-middle">
+                          <Badge tone="warning">Email belum diverifikasi</Badge>
+                        </span>
+                      )}
                     </td>
                     <td className="py-2.5 pr-3 text-ink-700">{ROLE_LABEL[s.role]}</td>
                     <td className="hidden py-2.5 pr-3 text-ink-700 lg:table-cell">{s.class ?? '—'}</td>

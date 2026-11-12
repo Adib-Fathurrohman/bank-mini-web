@@ -8,6 +8,7 @@ import { PageHeader, Panel, Section } from '@/components/Page'
 import { EmptyState, LoadError, Loading } from '@/components/QueryStatus'
 import { formatDate, formatTime } from '@/lib/datetime'
 import { formatRupiah } from '@/lib/money'
+import { DrawerPanel } from './components/DrawerPanel'
 import { ShiftSummary } from './components/ShiftSummary'
 import { TransactionTable } from './components/TransactionTable'
 import { correctedIds } from './correctionEligibility'
@@ -114,6 +115,12 @@ function ActiveShift({ gate }: { gate: Extract<ShiftGate, { shift: unknown }> })
       )}
 
       <ShiftSummary shift={shift} />
+
+      {gate.drawer && (
+        <Section title="Isi laci per pecahan" description="Hitungan awal + uang diterima − uang dibayarkan; diperbarui setiap transaksi.">
+          <DrawerPanel drawer={gate.drawer} />
+        </Section>
+      )}
 
       <Section
         title="Transaksi shift ini"

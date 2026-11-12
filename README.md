@@ -13,9 +13,10 @@ Web app for the staff of a school mini bank: **Administrator**, **Supervisor** a
 
 | Role | Pages |
 | --- | --- |
-| Teller | open the shift with the drawer count, serve customers (deposit, withdrawal approved by the customer in their app, QR lookup), corrections, close the shift, shift history and PDFs |
-| Supervisor | dashboard, review daily reports (approve, hold, reject), vault ledger, customers, staff, forgotten-PIN requests (read only), audit log, journal, reports |
-| Administrator | dashboard, open and edit customer accounts, reset PINs at the counter, approve or reject forgotten-PIN requests from the app, print cards, graduation, staff (add, edit, block, import from Excel/CSV), settings, audit log, journal, reports |
+| Teller | open the shift with the drawer count, serve customers (deposit with the notes received, withdrawal approved by the customer in their app and paid out note by note, QR lookup), the drawer per denomination, corrections, close the shift (a refusal lists the notes that differ), shift history and PDFs |
+| Supervisor | dashboard, review daily reports (approve, hold, reject), vault ledger, customers, staff, forgotten-PIN requests (read only), history of graduations and class promotions (print slips), audit log, journal, reports |
+| Administrator | dashboard, open and edit customer accounts, reset PINs at the counter, approve or reject forgotten-PIN requests from the app, print cards, **Kelulusan** (pay out and close a graduating class, print the slips), **Kenaikan Kelas** (move X and XI up a class once a year), staff (add, edit with an optional email, block, import from Excel/CSV), settings, audit log, journal, reports |
+| Everyone | **Profil saya**: own email (verified through a link) and password; **Lupa password?** on the login page (reset link by email) |
 
 The teller never enters or sees a customer's PIN: withdrawals are approved by the student
 in the customer app.
@@ -80,6 +81,26 @@ deploy/
 ├── deploy.sh                 legacy, not used
 └── nginx/                    legacy, not used
 ```
+
+## Cash per denomination
+
+Shifts opened from backend v0.3.0 track the drawer note by note (`cash_tracked`). The teller
+enters the notes received for a deposit and the notes paid out for a withdrawal (both must add
+up to the amount; "Isi otomatis" fills the largest notes the drawer allows). Older shifts keep
+the total-only flow. Helpers and tests: `src/lib/denominations.ts`.
+
+## Graduation and class promotion
+
+`Kelulusan` previews a class, pays every account in full from the main vault and closes it
+(all or nothing), then prints one slip per student. `Kenaikan Kelas` runs once a year after
+class XII graduated; students ticked "Tinggal kelas" stay. Both keep a history that
+supervisors can read.
+
+## Staff email and password
+
+The link in the verification email opens `/login?email_verified=1`; the reset link opens
+`/reset-password?token=…&email=…`. Both are client routes under the app's base path
+(`/api/` in production), so the nginx `try_files` fallback already serves them.
 
 ## Session behaviour
 

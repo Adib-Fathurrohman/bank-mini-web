@@ -55,4 +55,17 @@ describe('shiftGate', () => {
       expect(activeShift(gate)?.report_date).toBe('2026-10-27')
     }
   })
+
+  it('carries the drawer of a shift that tracks cash per denomination', () => {
+    const drawer = [{ denomination: 50000, quantity: 3, subtotal: 150000 }]
+    const tracked = shiftGate({ data: report({ cash_tracked: true }), can_transact: true, transactions: [], drawer })
+    expect(tracked.kind === 'running' && tracked.drawer).toEqual(drawer)
+  })
+
+  it('has no drawer for a shift opened before per-denomination tracking', () => {
+    const untracked = shiftGate({ data: report(), can_transact: true, transactions: [], drawer: null })
+    expect(untracked.kind === 'running' && untracked.drawer).toBeNull()
+    const missing = shiftGate({ data: report(), can_transact: true, transactions: [] })
+    expect(missing.kind === 'running' && missing.drawer).toBeNull()
+  })
 })

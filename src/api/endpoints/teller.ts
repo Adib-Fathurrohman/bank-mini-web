@@ -42,7 +42,10 @@ async function recordMoney(path: string, body: unknown, idempotencyKey: string):
   return { transaction: response.data, replayed: status === 200 }
 }
 
-export function deposit(body: { account_number: string; amount: number }, idempotencyKey: string) {
+/** Notes and coins of one transaction: `{"20000": 1, "5000": 3}` (see `toNotesPayload`). */
+export type NotesPayload = Record<string, number>
+
+export function deposit(body: { account_number: string; amount: number; denominations?: NotesPayload }, idempotencyKey: string) {
   return recordMoney('/teller/deposits', body, idempotencyKey)
 }
 
@@ -71,18 +74,22 @@ export function cancelWithdrawalAuthorization(id: string) {
   return api.post<Single<WithdrawalAuthorization>>(`${AUTHORIZATIONS}/${encodeURIComponent(id)}/cancel`)
 }
 
-/** Records the approved withdrawal. 201 the first time, 200 with the same transaction on retry. */
-export async function completeWithdrawalAuthorization(id: string): Promise<RecordedTransaction> {
+/**
+ * Records the approved withdrawal. 201 the first time, 200 with the same transaction on retry.
+ * `denominations`: the notes actually handed over (tracked shifts); omitted, the server picks them.
+ */
+export async function completeWithdrawalAuthorization(id: string, denominations?: NotesPayload): Promise<RecordedTransaction> {
   const { status, body } = await requestWithStatus<Single<Transaction>>(
     'POST',
     `${AUTHORIZATIONS}/${encodeURIComponent(id)}/complete`,
+    denominations ? { body: { denominations } } : {},
   )
   return { transaction: body.data, replayed: status === 200 }
 }
 
 export function correctTransaction(
   id: number,
-  body: { reason: string; supervisor_username: string; supervisor_password: string },
+  body: { reason: string; supervisor_username: string; supervisor_password: string; denominations?: NotesPayload },
   idempotencyKey: string,
 ) {
   return recordMoney(`/teller/transactions/${id}/correct`, body, idempotencyKey)

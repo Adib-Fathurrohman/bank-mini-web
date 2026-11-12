@@ -5,6 +5,7 @@ import { Badge } from '@/components/Badge'
 import { DataList, DataRow } from '@/components/DataList'
 import { Icon } from '@/components/Icon'
 import { formatDateTime, formatTime } from '@/lib/datetime'
+import { describeNotes } from '@/lib/denominations'
 import { formatRupiah } from '@/lib/money'
 import { cashDirection } from '../labels'
 
@@ -68,6 +69,9 @@ export function TransactionReceipt({
         <DataRow label="Saldo sesudah" strong>
           {formatRupiah(transaction.balance_after)}
         </DataRow>
+        {describeNotes(transaction.cash) && (
+          <DataRow label={direction === 'in' ? 'Uang diterima' : 'Uang dibayarkan'}>{describeNotes(transaction.cash)}</DataRow>
+        )}
         {transaction.withdrawal_authorization && (
           <DataRow label="Persetujuan">
             Aplikasi nasabah · {formatTime(transaction.withdrawal_authorization.approved_at)} WIB

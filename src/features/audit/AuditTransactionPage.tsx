@@ -10,6 +10,7 @@ import { Icon } from '@/components/Icon'
 import { Eyebrow, PageHeader, Panel } from '@/components/Page'
 import { LoadError, Loading } from '@/components/QueryStatus'
 import { formatDateTime } from '@/lib/datetime'
+import { describeNotes } from '@/lib/denominations'
 import { formatRupiah } from '@/lib/money'
 import { cashDirection } from '@/features/teller/labels'
 import { ACCOUNT_LABEL } from './labels'
@@ -158,14 +159,23 @@ export function AuditTransactionPage() {
             <DataRow label="Rekening" mono>
               {t.customer.account_number}
             </DataRow>
-            <DataRow label={t.imported ? 'Diimpor oleh' : 'Teller'}>{t.teller?.full_name ?? '—'}</DataRow>
+            <DataRow label={t.imported ? 'Diimpor oleh' : t.graduation_id ? 'Dijalankan oleh' : 'Teller'}>
+              {t.teller?.full_name ?? '—'}
+            </DataRow>
             <DataRow label="Saldo sebelum">{formatRupiah(t.balance_before)}</DataRow>
             <DataRow label="Saldo sesudah" strong>
               {formatRupiah(t.balance_after)}
             </DataRow>
             {approvedBy && <DataRow label="Persetujuan">{approvedBy}</DataRow>}
+            {describeNotes(t.cash) && (
+              <DataRow label={direction === 'in' ? 'Uang diterima' : 'Uang dibayarkan'}>{describeNotes(t.cash)}</DataRow>
+            )}
             <DataRow label="Shift">
-              {t.daily_report_id === null ? (
+              {t.graduation_id ? (
+                <Link to={`/graduations/${t.graduation_id}`} className="font-medium text-brand-700 hover:underline">
+                  Kelulusan (dibayar dari brankas)
+                </Link>
+              ) : t.daily_report_id === null ? (
                 <>Impor dari pembukuan lama</>
               ) : user.role === 'supervisor' ? (
                 <Link to={`/supervisor/reports/${t.daily_report_id}`} className="font-medium text-brand-700 hover:underline">

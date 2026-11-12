@@ -25,6 +25,8 @@ export interface StaffInput {
   /** Required on create; on edit, empty keeps the current password. */
   password?: string
   role: 'teller' | 'supervisor'
+  /** Optional; a new or changed address gets a verification link (valid 24 hours). */
+  email?: string | null
   class?: string | null
   phone?: string | null
 }
