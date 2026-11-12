@@ -72,7 +72,12 @@ export function LoginPage() {
           className="flex flex-col gap-4 rounded-xl border border-ink-200 bg-white p-6"
         >
           {success && <Alert tone="success">{success}</Alert>}
-          {verified === '1' && <Alert tone="success">Email berhasil diverifikasi.</Alert>}
+          {verified === '1' && (
+            <Alert tone="success" title="Email berhasil diverifikasi">
+              Lupa password? Pilih &quot;Lupa password?&quot; di bawah, masukkan email ini, lalu buka tautan di email kedua untuk
+              membuat password baru.
+            </Alert>
+          )}
           {verified === '0' && <Alert tone="warning">Tautan verifikasi tidak valid atau kedaluwarsa.</Alert>}
           {notice && <Alert tone="warning">{notice}</Alert>}
           {bannerError && <Alert>{bannerError}</Alert>}
